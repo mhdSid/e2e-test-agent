@@ -1,4 +1,4 @@
-import type { PipelineOptions } from './core/types'
+import type { PipelineOptions, GateCheck } from './core/types'
 import { LOG } from './core/constants'
 import { resolveAdapter } from './adapters/index'
 import { runProbe } from './orchestrators/probe/index'
@@ -6,6 +6,7 @@ import { runStateMachine } from './orchestrators/state-machine/index'
 import { runPlan } from './orchestrators/plan/index'
 import { runGenerate } from './orchestrators/generate/index'
 import { runGate } from './orchestrators/gate/index'
+import { runExecute } from './orchestrators/execute/index'
 import { runRepair } from './orchestrators/repair/index'
 
 const MAX_REPAIR_ATTEMPTS = 2
@@ -33,16 +34,34 @@ export async function run (opts: PipelineOptions): Promise<void> {
 
   while (attempt <= MAX_REPAIR_ATTEMPTS) {
     console.log(LOG.STAGE(`gate (attempt ${attempt + 1})`))
-    const result = runGate(opts.outDir)
+    const staticResult = runGate(opts.outDir)
+    let failed: GateCheck[] = staticResult.checks.filter((c) => !c.passed)
 
-    if (result.passed) return
+    // Only execute once the static gate is clean — no point running invalid selectors.
+    if (staticResult.passed) {
+      console.log(LOG.STAGE(`execute (attempt ${attempt + 1})`))
+      const exec = await runExecute(opts.outDir, opts.baseUrl)
+      for (const c of [
+        `  ${exec.passed ? '✓' : '✗'} Test execution: ${exec.total - exec.failed}/${exec.total} specs pass`
+      ]) console.log(c)
+
+      if (exec.passed) {
+        console.log(LOG.GATE_PASS)
+        return
+      }
+      // Runtime failures become repair checks — real assertion errors, not static shape.
+      failed = exec.failures.map((f) => ({
+        name: `runtime failure: ${f.title}`,
+        passed: false,
+        detail: `${f.error} (${f.location})`
+      }))
+    }
 
     if (attempt === MAX_REPAIR_ATTEMPTS) {
       process.exitCode = 1
       return
     }
 
-    const failed = result.checks.filter((c) => !c.passed)
     console.log(LOG.STAGE(`repair (attempt ${attempt + 1})`))
     const outcome = await runRepair(opts.outDir, opts.model, failed)
 

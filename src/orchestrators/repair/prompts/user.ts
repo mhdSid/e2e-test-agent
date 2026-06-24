@@ -5,7 +5,7 @@ export function buildRepairUserTurn (spec: string, failedChecks: GateCheck[]): s
     .map((c) => `- ${c.name}: ${c.detail}`)
     .join('\n')
 
-  return `The following gate checks failed. Fix the spec.
+  return `The following gate checks failed (static violations and/or runtime test failures). Fix the spec.
 
 Failed checks:
 ${checkList}
