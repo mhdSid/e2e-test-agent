@@ -42,7 +42,3 @@ export function deriveConventionStates (props: ComponentProp[]): ComponentStateC
   }
   return states
 }
-
-export function isStateProp (name: string): boolean {
-  return BY_PROP.has(name)
-}

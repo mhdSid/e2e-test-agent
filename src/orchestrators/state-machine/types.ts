@@ -23,7 +23,6 @@ export interface ValidationField {
   name: string
   required: boolean
   errorTestid: string | null
-  states: ['untouched', 'invalid', 'valid']
 }
 
 export interface FormState {

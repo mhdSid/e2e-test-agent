@@ -4,7 +4,7 @@ import type { Provenance } from './graph/types'
 import { NODE_TYPE, TAG_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR, FRAMEWORK_COMPONENTS } from './constants'
 
 /** A guard → provenance classifier, injected so parse-template stays graph-agnostic. */
-export type Classify = (condition: string) => Provenance
+type Classify = (condition: string) => Provenance
 
 interface ParsedTemplate {
   states: StateNode[]

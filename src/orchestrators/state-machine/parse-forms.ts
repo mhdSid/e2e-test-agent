@@ -91,8 +91,7 @@ export function parseForms (templateContent: string): FormState[] {
         testid: getTestid(input) ?? 'unknown',
         name: symbol,
         required: isRequired(input),
-        errorTestid: errors.find((e) => e.symbol === symbol)?.testid ?? null,
-        states: ['untouched', 'invalid', 'valid']
+        errorTestid: errors.find((e) => e.symbol === symbol)?.testid ?? null
       }
     })
 

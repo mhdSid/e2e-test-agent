@@ -5,7 +5,7 @@ import { Project } from 'ts-morph'
  * and individual guard expressions are parsed with the real compiler (ts-morph),
  * never with regexes.
  */
-export const tsProject = new Project({
+const tsProject = new Project({
   useInMemoryFileSystem: true,
   compilerOptions: { allowJs: true, checkJs: false }
 })

@@ -109,7 +109,7 @@ function dependentsMap (graph: ReactiveGraph): Map<string, string[]> {
 }
 
 /** PUSH: every signal reachable downstream from `start` (itself + transitive dependents). */
-export function reachableSignals (graph: ReactiveGraph, start: string): Set<string> {
+function reachableSignals (graph: ReactiveGraph, start: string): Set<string> {
   const dependents = dependentsMap(graph)
   const seen = new Set<string>([start])
   const queue = [start]
