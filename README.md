@@ -14,59 +14,59 @@ asserts what the real app renders.
 
 ## How it works
 
-One CLI command runs the whole pipeline. The **probe** (blue) captures the live DOM;
-the **reactive-graph state machine** (amber) is the heart — it statically reifies each
-SFC into signals, events and states; the **LLM** stages (green) only reason over that
-ground truth; the **gate** (◆) is a hard boundary with a bounded repair loop. Every
-node is a light island, so the arrows stay readable in GitHub light *and* dark mode.
+The novel idea is in the **left panel**: we statically extract the *reactive graph* a
+framework builds at runtime — but build it **total**, for coverage — and read it two
+ways. A **PULL** (backward slice, dotted) gives each state's **provenance**; a **PUSH**
+(dirty-mark, bold) gives the **transitions** that reach it. Together they form a
+**State-Flow Graph** which, with the live-DOM probe, *grounds* the LLM. The generated
+spec is then **executed** in Playwright — so "pass" means the tests actually run green,
+and any runtime failure feeds the repair loop. (Foundations: [docs/foundations.md](docs/foundations.md).)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-monospace, SFMono-Regular, monospace','primaryColor':'#eef2ff','primaryTextColor':'#0f172a','primaryBorderColor':'#6366f1','lineColor':'#8b5cf6','edgeLabelBackground':'#ffffff'},'flowchart':{'curve':'linear','nodeSpacing':36,'rankSpacing':60}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-monospace, SFMono-Regular, Menlo, monospace','fontSize':'13px','primaryColor':'#eef2ff','primaryTextColor':'#1e293b','primaryBorderColor':'#a5b4fc','lineColor':'#94a3b8','edgeLabelBackground':'#ffffff'},'flowchart':{'curve':'basis','nodeSpacing':26,'rankSpacing':48,'padding':6}}}%%
 flowchart LR
-  CLI([e2e-agent run]):::entry
-  PROBE[probe<br/>renders each route]:::det
-  PJ[(probe.json)]:::art
+  CLI([e2e-agent run]):::start
 
-  subgraph SM["state machine · static reactive graph"]
+  subgraph RG["★ static reactive graph — the novel core"]
     direction LR
-    SIG[signals<br/>ref · computed · prop · route · store]:::core
-    EVT[events<br/>v-model · handlers]:::core
-    ST[states<br/>v-if chains]:::core
-    PRV[provenance<br/>route·prop·store·user·data]:::core
-    SIG --> ST
-    EVT -->|push| ST
-    ST -->|pull| PRV
+    SIG["signals<br/>ref · computed · prop · route · store"]:::sig
+    EVT["events<br/>v-model · handlers"]:::sig
+    G["guards<br/>v-if chains"]:::sig
+    PROV["provenance<br/>route·prop·store·user·data"]:::res
+    TR["transitions<br/>actuator → state"]:::res
+    EVT -->|writes| SIG
+    SIG -->|def-use| G
+    G -. "PULL · backward slice" .-> PROV
+    EVT == "PUSH · dirty-mark" ==> TR
+    G --> TR
   end
-  SJ[(state-machine.json)]:::art
 
-  PLAN[plan]:::ai
-  GEN[generate]:::ai
-  SPEC[(tests.spec.ts)]:::art
-  GATE{gate · 3 checks}:::gate
-  PW[playwright<br/>run specs]:::det
-  REP[repair]:::ai
+  PROBE["probe<br/>live DOM"]:::box
+  SFG[["State-Flow Graph<br/>states + provenance + transitions"]]:::hero
 
-  CLI --> PROBE --> PJ
-  CLI --> SM --> SJ
-  PJ --> PLAN
-  SJ --> PLAN
-  PLAN --> GEN
-  PJ --> GEN
-  SJ --> GEN
-  GEN --> SPEC --> GATE
-  PJ --> GATE
-  SJ --> GATE
-  GATE -->|pass| PW
-  GATE -->|fail| REP --> SPEC
+  CLI --> SIG
+  CLI --> PROBE
+  PROV --> SFG
+  TR --> SFG
+  SFG --> PLAN["plan"]:::box
+  PROBE --> PLAN
+  PLAN --> GEN["generate"]:::box --> SPEC[("tests.spec.ts")]:::art
+  SPEC --> GATE["static gate"]:::box --> EXEC["execute · playwright"]:::box
+  EXEC -->|pass| OK([green ✓]):::ok
+  EXEC -->|fail| FIX["repair"]:::fix
+  GATE -->|fail| FIX
+  FIX --> SPEC
 
-  classDef entry fill:#0f172a,color:#f8fafc,stroke:#0f172a,stroke-width:2px;
-  classDef det fill:#eff6ff,color:#1e3a5f,stroke:#3b82f6,stroke-width:1.5px;
-  classDef core fill:#fff7ed,color:#7c2d12,stroke:#f59e0b,stroke-width:1.5px;
-  classDef ai fill:#ecfdf5,color:#064e3b,stroke:#10b981,stroke-width:1.5px;
-  classDef art fill:#f8fafc,color:#334155,stroke:#94a3b8,stroke-width:1.5px;
-  classDef gate fill:#1e293b,color:#f8fafc,stroke:#a855f7,stroke-width:2px;
-  style SM fill:#fffbeb,stroke:#f59e0b,stroke-width:1px;
-  linkStyle default stroke:#8b5cf6,stroke-width:2px;
+  classDef start fill:#6366f1,color:#ffffff,stroke:#4f46e5;
+  classDef ok fill:#10b981,color:#ffffff,stroke:#059669;
+  classDef box fill:#f8fafc,color:#334155,stroke:#cbd5e1;
+  classDef sig fill:#eef2ff,color:#3730a3,stroke:#a5b4fc;
+  classDef res fill:#e0e7ff,color:#312e81,stroke:#818cf8;
+  classDef hero fill:#312e81,color:#eef2ff,stroke:#4f46e5,stroke-width:1.5px;
+  classDef art fill:#fffbeb,color:#92400e,stroke:#fcd34d;
+  classDef fix fill:#fff1f2,color:#9f1239,stroke:#fda4af;
+  style RG fill:#f5f7ff,stroke:#c7d2fe,stroke-width:1px,stroke-dasharray:6 4,color:#4338ca;
+  linkStyle default stroke:#94a3b8,stroke-width:1.5px;
 ```
 
 | Stage | Kind | What happens (technical) |
