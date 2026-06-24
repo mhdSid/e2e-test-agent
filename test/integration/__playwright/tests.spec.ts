@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Route /#/', () => {
-  test('H1 – Home page renders static title', async ({ page }) => {
+  test('H1 – Home page renders title', async ({ page }) => {
     await page.goto('http://localhost:5173/#/')
     await expect(page.getByTestId('home-title')).toHaveText('Hotel Booking')
   })
 
-  test('H2 – Home page renders static subtitle', async ({ page }) => {
+  test('H2 – Home page renders subtitle', async ({ page }) => {
     await page.goto('http://localhost:5173/#/')
     await expect(page.getByTestId('home-subtitle')).toHaveText('Find and book your perfect stay')
   })
@@ -23,60 +23,77 @@ test.describe('Route /#/', () => {
 })
 
 test.describe('Route /#/plans', () => {
-  test('P1 – [state-0] plan with seats === 0 shows "Sold out" status (no Book button)', async ({ page }) => {
+  test('P1 – [state-0] plan with seats === 0 shows "Sold out" status (not seat count)', async ({ page }) => {
     await page.goto('http://localhost:5173/#/plans')
     const planItems = page.getByTestId('plan-item')
-    const premiumItem = planItems.nth(2)
-    await expect(premiumItem.getByTestId('plan-status')).toContainText('Sold out')
-    await expect(premiumItem.getByTestId('plan-book')).toHaveCount(0)
+    const count = await planItems.count()
+    let premiumItem = null
+    for (let i = 0; i < count; i++) {
+      const item = planItems.nth(i)
+      const nameText = await item.getByTestId('plan-name').textContent()
+      if (nameText && nameText.includes('Premium')) {
+        premiumItem = item
+        break
+      }
+    }
+    await expect(premiumItem!.getByTestId('plan-status')).toContainText('Sold out')
+    await expect(premiumItem!.getByTestId('plan-book')).toHaveCount(0)
   })
 
-  test('P2 – [state-1] fallback branch: sold-out plan does not render a Book button', async ({ page }) => {
+  test('P2 – [state-1] fallback branch: plan with seats > 0 shows seat count in plan-status', async ({ page }) => {
     await page.goto('http://localhost:5173/#/plans')
-    const planItems = page.getByTestId('plan-item')
-    const premiumItem = planItems.nth(2)
-    await expect(premiumItem.getByTestId('plan-book')).toHaveCount(0)
-    const soldOutStatus = page.getByTestId('plan-status').filter({ hasText: 'Sold out' })
-    await expect(soldOutStatus).toHaveText('Sold out')
+    await expect(page.getByTestId('plan-status').first()).toContainText('seats')
   })
 
-  test('P3 – [state-2] featured plan renders the Featured badge', async ({ page }) => {
+  test('P3 – [state-2] featured plan renders plan-badge', async ({ page }) => {
     await page.goto('http://localhost:5173/#/plans')
     await expect(page.getByTestId('plan-badge').first()).toHaveText('Featured')
   })
 
-  test('P4 – [state-3] plan with seats > 0 renders the Book button', async ({ page }) => {
+  test('P4 – [state-3] plan with seats > 0 renders Book button', async ({ page }) => {
     await page.goto('http://localhost:5173/#/plans')
     await expect(page.getByTestId('plan-book').first()).toHaveText('Book')
-    await expect(page.getByTestId('plan-status').first()).toContainText('seats')
+  })
+
+  test('P5 – Plans page renders title', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/plans')
+    await expect(page.getByTestId('plans-title')).toHaveText('Available Plans')
   })
 })
 
 test.describe('Route /#/search', () => {
-  test('S1 – [state-0] entering a query renders result elements', async ({ page }) => {
+  test('S1 – Search page renders title', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/search')
+    await expect(page.getByTestId('search-title')).toHaveText('Search Plans')
+  })
+
+  test('S2 – Search page renders Search button', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/search')
+    await expect(page.getByTestId('search-btn')).toHaveText('Search')
+  })
+
+  test('S3 – [state-0] query with results renders result-count and result-list', async ({ page }) => {
     await page.goto('http://localhost:5173/#/search')
     await page.getByTestId('search-input').fill('Basic')
     await page.getByTestId('search-btn').click()
     await expect(page.getByTestId('result-count')).toContainText('result(s)')
     await expect(page.getByTestId('result-list')).toHaveCount(1)
-    await expect(page.getByTestId('result-item').first()).toBeVisible()
     await expect(page.getByTestId('result-item')).toHaveCount(1)
-    await expect(page.getByTestId('result-name').first()).toContainText('Basic')
-    await expect(page.getByTestId('result-price').first()).toContainText('¥')
+    await expect(page.getByTestId('result-name')).toContainText('Basic')
+    await expect(page.getByTestId('result-price')).toContainText('¥')
   })
 
-  test('S2 – [state-1] query with no matches renders no-results message', async ({ page }) => {
+  test('S4 – [state-1] query with no matching results renders no-results', async ({ page }) => {
     await page.goto('http://localhost:5173/#/search')
-    await page.getByTestId('search-input').fill('zzznomatch')
+    await page.getByTestId('search-input').fill('zzznomatch999')
     await page.getByTestId('search-btn').click()
     await expect(page.getByTestId('no-results')).toHaveText('No plans found')
   })
 
-  test('S3 – [form-valid-submit] valid search submission proceeds (URL reflects search state)', async ({ page }) => {
+  test('S5 – [form-valid-submit] valid search submission updates result-count', async ({ page }) => {
     await page.goto('http://localhost:5173/#/search')
     await page.getByTestId('search-input').fill('Standard')
     await page.getByTestId('search-btn').click()
-    await expect(page).toHaveURL(/\/#\/search/)
     await expect(page.getByTestId('result-count')).toContainText('result(s)')
   })
 })
@@ -87,8 +104,8 @@ test.describe('Route /#/book/1', () => {
     await expect(page.getByTestId('book-title')).toContainText('Book:')
     await expect(page.getByTestId('book-price')).toHaveText('¥3,000')
     await expect(page.getByTestId('book-form')).toHaveCount(1)
-    await expect(page.getByTestId('input-name')).toHaveAttribute('required', '')
-    await expect(page.getByTestId('input-email')).toHaveAttribute('required', '')
+    await expect(page.getByTestId('input-name')).toHaveCount(1)
+    await expect(page.getByTestId('input-email')).toHaveCount(1)
     await expect(page.getByTestId('submit-btn')).toHaveText('Confirm Booking')
   })
 
@@ -98,13 +115,23 @@ test.describe('Route /#/book/1', () => {
     await expect(page.getByTestId('back-link')).toHaveCount(0)
   })
 
-  test('B3 – [state-1] sold-out plan renders error-msg and back-link', async ({ page }) => {
+  test('B3 – [state-0] input-name has required attribute', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/book/1')
+    await expect(page.getByTestId('input-name')).toHaveAttribute('required', '')
+  })
+
+  test('B4 – [state-0] input-email has required attribute', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/book/1')
+    await expect(page.getByTestId('input-email')).toHaveAttribute('required', '')
+  })
+
+  test('B5 – [state-1] sold-out plan renders error-msg and back-link', async ({ page }) => {
     await page.goto('http://localhost:5173/#/book/3')
     await expect(page.getByTestId('error-msg')).toHaveText('Plan unavailable')
     await expect(page.getByTestId('back-link')).toHaveText('Back to plans')
   })
 
-  test('B4 – [state-1] sold-out plan does not render booking form elements', async ({ page }) => {
+  test('B6 – [state-1] sold-out plan does not render booking form elements', async ({ page }) => {
     await page.goto('http://localhost:5173/#/book/3')
     await expect(page.getByTestId('book-title')).toHaveCount(0)
     await expect(page.getByTestId('book-price')).toHaveCount(0)
@@ -114,21 +141,42 @@ test.describe('Route /#/book/1', () => {
     await expect(page.getByTestId('submit-btn')).toHaveCount(0)
   })
 
-  test('B5 – [form-valid-submit] valid booking form submission navigates to confirm', async ({ page }) => {
+  test('B7 – [form-valid-submit] valid booking submission navigates to /#/confirm', async ({ page }) => {
     await page.goto('http://localhost:5173/#/book/1')
-    await page.getByTestId('input-name').fill('Alice')
-    await page.getByTestId('input-email').fill('alice@example.com')
+    await page.getByTestId('input-name').fill('Jane Doe')
+    await page.getByTestId('input-email').fill('jane@example.com')
     await page.getByTestId('submit-btn').click()
-    await expect(page).toHaveURL(/\/#\/confirm/)
+    await expect(page).toHaveURL(/#\/confirm/)
   })
 })
 
 test.describe('Route /#/confirm', () => {
-  test('C1 – [state-0] confirm page with active booking renders confirmation details', async ({ page }) => {
+  test('C1 – [state-1] no active booking renders no-booking message', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/confirm')
+    await expect(page.getByTestId('no-booking')).toHaveText('No active booking')
+  })
+
+  test('C2 – [state-1] no active booking renders back-plans link', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/confirm')
+    await expect(page.getByTestId('back-plans')).toHaveText('Browse plans')
+  })
+
+  test('C3 – [state-1] no active booking does not render confirm-title or booking details', async ({ page }) => {
+    await page.goto('http://localhost:5173/#/confirm')
+    await expect(page.getByTestId('confirm-title')).toHaveCount(0)
+    await expect(page.getByTestId('confirm-name')).toHaveCount(0)
+    await expect(page.getByTestId('confirm-email')).toHaveCount(0)
+    await expect(page.getByTestId('confirm-plan')).toHaveCount(0)
+    await expect(page.getByTestId('confirm-price')).toHaveCount(0)
+    await expect(page.getByTestId('back-home')).toHaveCount(0)
+  })
+
+  test('C4 – [state-0] confirmed booking renders confirmation details', async ({ page }) => {
     await page.goto('http://localhost:5173/#/book/1')
-    await page.getByTestId('input-name').fill('Alice')
-    await page.getByTestId('input-email').fill('alice@example.com')
+    await page.getByTestId('input-name').fill('Jane Doe')
+    await page.getByTestId('input-email').fill('jane@example.com')
     await page.getByTestId('submit-btn').click()
+    await expect(page).toHaveURL(/#\/confirm/)
     await expect(page.getByTestId('confirm-title')).toHaveText('Booking Confirmed')
     await expect(page.getByTestId('confirm-name')).toContainText('Name:')
     await expect(page.getByTestId('confirm-email')).toContainText('Email:')
@@ -137,28 +185,12 @@ test.describe('Route /#/confirm', () => {
     await expect(page.getByTestId('back-home')).toHaveText('Back to home')
   })
 
-  test('C2 – [state-0] confirm page with active booking does not render no-booking or back-plans', async ({ page }) => {
+  test('C5 – [state-0] confirmed booking does not render no-booking or back-plans', async ({ page }) => {
     await page.goto('http://localhost:5173/#/book/1')
-    await page.getByTestId('input-name').fill('Alice')
-    await page.getByTestId('input-email').fill('alice@example.com')
+    await page.getByTestId('input-name').fill('Jane Doe')
+    await page.getByTestId('input-email').fill('jane@example.com')
     await page.getByTestId('submit-btn').click()
     await expect(page.getByTestId('no-booking')).toHaveCount(0)
     await expect(page.getByTestId('back-plans')).toHaveCount(0)
-  })
-
-  test('C3 – [state-1] confirm page without booking renders fallback no-booking message', async ({ page }) => {
-    await page.goto('http://localhost:5173/#/confirm')
-    await expect(page.getByTestId('no-booking')).toHaveText('No active booking')
-    await expect(page.getByTestId('back-plans')).toHaveText('Browse plans')
-  })
-
-  test('C4 – [state-1] confirm page without booking does not render confirmation elements', async ({ page }) => {
-    await page.goto('http://localhost:5173/#/confirm')
-    await expect(page.getByTestId('confirm-title')).toHaveCount(0)
-    await expect(page.getByTestId('confirm-name')).toHaveCount(0)
-    await expect(page.getByTestId('confirm-email')).toHaveCount(0)
-    await expect(page.getByTestId('confirm-plan')).toHaveCount(0)
-    await expect(page.getByTestId('confirm-price')).toHaveCount(0)
-    await expect(page.getByTestId('back-home')).toHaveCount(0)
   })
 })
