@@ -1,0 +1,40 @@
+{
+  "name": "e2e-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E test generation agent — probe → plan → generate → gate",
+  "packageManager": "yarn@4.0.2",
+  "workspaces": [
+    "example"
+  ],
+  "bin": "./src/cli/index.ts",
+  "scripts": {
+    "probe": "tsx src/cli/index.ts probe",
+    "plan": "tsx src/cli/index.ts plan",
+    "generate": "tsx src/cli/index.ts generate",
+    "gate": "tsx src/cli/index.ts gate",
+    "run": "tsx src/cli/index.ts run",
+    "statemachine": "tsx src/cli/index.ts statemachine",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "example:dev": "yarn workspace booking-vue dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@vue/compiler-dom": "^3.5.38",
+    "@vue/compiler-sfc": "^3.5.38",
+    "commander": "^12.0.0",
+    "playwright": "^1.45.0",
+    "ts-morph": "^24.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@stylistic/eslint-plugin": "^2.13.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
