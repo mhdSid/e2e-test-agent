@@ -37,8 +37,22 @@ export function generateStateMachine (
   const model = extractSignals(scriptContent, sfcPath, aliases)
   const graph = buildReactiveGraph(model, templateContent)
 
-  const { states, components, texts } = parseTemplate(templateContent, (cond) => provenanceOf(graph, cond))
   const forms = parseForms(templateContent, model.handlerNavigations)
+
+  // A signal has the VALIDATION role if it gates a submit or drives an error element AND
+  // it is a local/derived signal (not route/store/prop). Guards reading it → `validation`.
+  // Structural + graph-derived — replaces the old errors./meta. keyword regex.
+  const validationSignals = new Set(
+    forms.flatMap((f) => f.validationRoots).filter((r) => {
+      const kind = graph.signals.get(r)?.kind
+      return kind === 'composable' || kind === 'computed' || kind === 'ref' || kind === 'reactive'
+    })
+  )
+
+  const { states, components, texts } = parseTemplate(
+    templateContent,
+    (cond) => provenanceOf(graph, cond, validationSignals)
+  )
 
   // PUSH: which actuators flip each state → transitions (the State-Flow-Graph edges).
   const actuatorsByState = new Map<string, string[]>()

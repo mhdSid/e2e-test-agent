@@ -33,6 +33,13 @@
           "plan-status"
         ],
         "provenance": "data",
+        "recipe": [
+          {
+            "access": "plan.seats",
+            "operator": "===",
+            "value": "0"
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -45,6 +52,13 @@
           "plan-status"
         ],
         "provenance": "data",
+        "recipe": [
+          {
+            "access": "plan.seats",
+            "operator": "!==",
+            "value": "0"
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -57,6 +71,13 @@
           "plan-badge"
         ],
         "provenance": "data",
+        "recipe": [
+          {
+            "access": "plan.featured",
+            "operator": "truthy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_2"
@@ -69,6 +90,13 @@
           "plan-book"
         ],
         "provenance": "data",
+        "recipe": [
+          {
+            "access": "plan.seats",
+            "operator": ">",
+            "value": "0"
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_3"
@@ -184,6 +212,13 @@
           "result-price"
         ],
         "provenance": "user-input",
+        "recipe": [
+          {
+            "access": "query",
+            "operator": "truthy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -196,6 +231,13 @@
           "no-results"
         ],
         "provenance": "user-input",
+        "recipe": [
+          {
+            "access": "results.length",
+            "operator": "===",
+            "value": "0"
+          }
+        ],
         "depth": 1,
         "parentCondition": "query",
         "chainId": "chain_1"
@@ -207,14 +249,9 @@
         "submitTestid": "search-btn",
         "submitGatedBy": null,
         "submitNavigatesTo": null,
-        "fields": [
-          {
-            "testid": "search-input",
-            "name": "query",
-            "required": false,
-            "errorTestid": null
-          }
-        ]
+        "validated": false,
+        "validationRoots": [],
+        "fields": []
       }
     ],
     "components": [],
@@ -336,6 +373,18 @@
           "submit-btn"
         ],
         "provenance": "route",
+        "recipe": [
+          {
+            "access": "plan.seats",
+            "operator": ">",
+            "value": "0"
+          },
+          {
+            "access": "plan",
+            "operator": "truthy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -348,7 +397,19 @@
           "error-msg",
           "back-link"
         ],
-        "provenance": "data",
+        "provenance": "route",
+        "recipe": [
+          {
+            "access": "plan.seats",
+            "operator": "<=",
+            "value": "0"
+          },
+          {
+            "access": "plan",
+            "operator": "falsy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -360,6 +421,8 @@
         "submitTestid": "submit-btn",
         "submitGatedBy": null,
         "submitNavigatesTo": "/confirm",
+        "validated": false,
+        "validationRoots": [],
         "fields": [
           {
             "testid": "input-name",
@@ -462,7 +525,7 @@
       },
       {
         "id": "state-1",
-        "provenance": "data",
+        "provenance": "route",
         "description": "renders fallback branch",
         "setup": "provide input so no sibling condition in the chain matches",
         "expectVisible": [
@@ -507,6 +570,13 @@
           "back-home"
         ],
         "provenance": "store",
+        "recipe": [
+          {
+            "access": "store.booking",
+            "operator": "truthy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -519,7 +589,14 @@
           "no-booking",
           "back-plans"
         ],
-        "provenance": "data",
+        "provenance": "store",
+        "recipe": [
+          {
+            "access": "store.booking",
+            "operator": "falsy",
+            "value": null
+          }
+        ],
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -596,7 +673,7 @@
       },
       {
         "id": "state-1",
-        "provenance": "data",
+        "provenance": "store",
         "description": "renders fallback branch",
         "setup": "provide input so no sibling condition in the chain matches",
         "expectVisible": [

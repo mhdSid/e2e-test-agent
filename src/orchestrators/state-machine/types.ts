@@ -1,4 +1,7 @@
-import type { Provenance, SignalKind } from './graph/types'
+import type { Provenance, SignalKind, Comparison } from './graph/types'
+
+/** The concrete trigger for a state: a field, an operator, and a target value. */
+export type StateRecipe = Comparison
 
 export interface StateNode {
   id: string
@@ -7,6 +10,12 @@ export interface StateNode {
   visibleTestids: string[]
   /** Where this state's guard data originates — derived by the pull/backward-slice. */
   provenance: Provenance
+  /**
+   * The satisfying-assignment recipe: which fields at which values trigger this
+   * state. Derived from the guard expression — the concrete test setup for
+   * computed/store-driven pages. For an `else`, these are the negated form.
+   */
+  recipe: StateRecipe[]
   depth: number
   parentCondition: string | null
   /**
@@ -32,6 +41,10 @@ export interface FormState {
   submitGatedBy: string | null
   /** route this form's submit navigates to (router.push), if any. */
   submitNavigatesTo: string | null
+  /** true when the form has a validity gate or error elements (structural, library-agnostic). */
+  validated: boolean
+  /** signals that gate submit or drive an error element — feed validation-provenance detection. */
+  validationRoots: string[]
   fields: ValidationField[]
 }
 

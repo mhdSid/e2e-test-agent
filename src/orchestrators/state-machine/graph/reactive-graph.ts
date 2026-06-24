@@ -86,9 +86,22 @@ function combine (provs: Provenance[]): Provenance {
   return 'data'
 }
 
-/** PULL: classify a guard expression by tracing its signal roots to their source kinds. */
-export function provenanceOf (graph: ReactiveGraph, expr: string): Provenance {
+/**
+ * PULL: classify a guard expression by tracing its signal roots to their source kinds.
+ *
+ * `validationSignals` are signals that play the structural VALIDATION role — they gate
+ * a form's submit (`:disabled`) or drive an error element (`v-if`). A guard reading one
+ * is `validation`. This is derived from the graph + form structure (see index.ts), NOT
+ * from matching `errors.`/`meta.` in the text — so it is library-agnostic and works for
+ * a custom `isValid` exactly as for vee-validate's `meta.valid`.
+ */
+export function provenanceOf (
+  graph: ReactiveGraph,
+  expr: string,
+  validationSignals: ReadonlySet<string> = new Set()
+): Provenance {
   const roots = analyzeExpression(expr).roots
+  if (roots.some((r) => validationSignals.has(r))) return 'validation'
   const seen = new Set<string>()
   const provs = roots.flatMap((r) => provenanceOfSignal(graph, r, seen))
   return provs.length ? combine(provs) : 'data'

@@ -42,16 +42,17 @@ function findFields (node: any, out: any[]): void {
 
 /**
  * Error elements: any element with a testid whose v-if guard hinges on a symbol.
- * The field↔error link is then a structural symbol match (the error guard reads the
- * same symbol the field binds) — no `errors.(\w+)` regex, no library-name matching.
+ * The field↔error link is a structural symbol match (the error guard reads the same
+ * symbol the field binds); `roots` are the signals the guard reads (e.g. `errors`),
+ * which feed the structural validation-role detection — no `errors.(\w+)` regex.
  */
-function findErrorElements (node: any, out: { testid: string; symbol: string }[]): void {
+function findErrorElements (node: any, out: { testid: string; symbol: string; roots: string[] }[]): void {
   if (node.type === NODE_TYPE.ELEMENT) {
     const testid = getTestid(node)
     const cond = getIfCondition(node)
     if (testid && cond) {
       const symbol = bindingSymbol(cond)
-      if (symbol) out.push({ testid, symbol })
+      if (symbol) out.push({ testid, symbol, roots: analyzeExpression(cond).roots })
     }
   }
   for (const child of node.children ?? []) findErrorElements(child, out)
@@ -93,28 +94,41 @@ export function parseForms (
     const fieldNodes: any[] = []
     findFields(formNode, fieldNodes)
 
-    const errors: { testid: string; symbol: string }[] = []
+    const errors: { testid: string; symbol: string; roots: string[] }[] = []
     findErrorElements(formNode, errors)
 
-    const fields: ValidationField[] = fieldNodes.map((input) => {
+    const allFields: ValidationField[] = fieldNodes.map((input) => {
       const symbol = bindingSymbol(getModel(input)) ?? getTestid(input) ?? 'unknown'
+      const errorTestid = errors.find((e) => e.symbol === symbol)?.testid ?? null
       return {
         testid: getTestid(input) ?? 'unknown',
         name: symbol,
         required: isRequired(input),
-        errorTestid: errors.find((e) => e.symbol === symbol)?.testid ?? null
+        errorTestid
       }
     })
+
+    // a real validation field has a schema-backed error element OR a required flag.
+    // inputs with neither (e.g. a coupon box) are not part of the validation contract.
+    const fields = allFields.filter((f) => f.errorTestid !== null || f.required)
 
     const submit = findSubmit(formNode)
     const submitHandler = getSubmitHandler(formNode)
     const submitNavigatesTo = submitHandler ? handlerNavigations[submitHandler]?.[0] ?? null : null
+
+    // Structural validation role: the signals that gate the submit (:disabled) or drive
+    // an error element. The graph turns these into `validation` provenance — no keywords.
+    const gateRoots = submit.gate ? analyzeExpression(submit.gate).roots : []
+    const errorRoots = errors.flatMap((e) => e.roots)
+    const validationRoots = [...new Set([...gateRoots, ...errorRoots])]
 
     return {
       formTestid: getTestid(formNode) ?? 'form',
       submitTestid: submit.testid,
       submitGatedBy: submit.gate,
       submitNavigatesTo,
+      validated: errors.length > 0 || submit.gate !== null,
+      validationRoots,
       fields
     }
   })

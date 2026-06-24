@@ -23,3 +23,7 @@ dist/
 .DS_Store
 .env
 .env.local
+
+# applied patch artifacts (kept locally, not committed)
+state-machine-full-patch/
+state-machine-full-patch.tar.gz

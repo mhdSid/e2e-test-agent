@@ -1,10 +1,21 @@
 import { parse } from '@vue/compiler-dom'
-import type { StateNode, ComponentUsage, ComponentProp } from './types'
+import type { StateNode, ComponentUsage, ComponentProp, StateRecipe } from './types'
 import type { Provenance } from './graph/types'
+import { analyzeExpression } from './graph/expression'
 import { NODE_TYPE, TAG_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR, FRAMEWORK_COMPONENTS } from './constants'
 
 /** A guard → provenance classifier, injected so parse-template stays graph-agnostic. */
 type Classify = (condition: string) => Provenance
+
+/** Negate a comparison so an `else` carries the recipe that makes its sibling `if` false. */
+function negateRecipe (recipe: StateRecipe[]): StateRecipe[] {
+  const flip: Record<string, string> = {
+    '===': '!==', '!==': '===', '==': '!=', '!=': '==',
+    '>': '<=', '>=': '<', '<': '>=', '<=': '>',
+    truthy: 'falsy', falsy: 'truthy'
+  }
+  return recipe.map((c) => ({ ...c, operator: flip[c.operator] ?? c.operator }))
+}
 
 interface ParsedTemplate {
   states: StateNode[]
@@ -115,6 +126,8 @@ function walkChildren (
   classify: Classify
 ): void {
   let currentChain: string | null = null
+  let chainCondition: string | null = null
+  let chainConditions: string[] = []
 
   for (const child of children) {
     if (isWhitespaceText(child)) continue
@@ -125,19 +138,33 @@ function walkChildren (
     if (ifInfo) {
       if (ifInfo.kind === 'if' || currentChain === null) {
         currentChain = `chain_${states.length}`
+        // remember the chain's opening discriminator so v-else-if/v-else
+        // inherit the SAME provenance as the `if` they negate.
+        chainCondition = ifInfo.condition
+        chainConditions = [ifInfo.condition]
+      } else if (ifInfo.kind === 'else-if') {
+        chainConditions.push(ifInfo.condition)
       }
       const isElse = ifInfo.kind === 'else'
       const id = isElse
         ? `ELSE_${states.length}`
         : `IF_${ifInfo.condition.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40)}`
 
+      // recipe: an `if`/`else-if` uses its own guard; an `else` requires EVERY
+      // prior branch in the chain to be false — so negate all of them and union.
+      const recipe: StateRecipe[] = isElse
+        ? chainConditions.flatMap((c) => negateRecipe(analyzeExpression(c).comparisons))
+        : analyzeExpression(ifInfo.condition).comparisons
+
       states.push({
         id,
         condition: ifInfo.condition,
         isElse,
         visibleTestids: collectScopedTestids(child, true),
-        // else branches inherit the chain's discriminating condition for provenance
-        provenance: classify(ifInfo.condition || parentCondition || ''),
+        // else / else-if inherit the chain's opening condition for provenance:
+        // they are flipped by the same signal as the `if`, only the value differs.
+        provenance: classify(ifInfo.condition || chainCondition || parentCondition || ''),
+        recipe,
         depth,
         parentCondition,
         chainId: currentChain
@@ -146,6 +173,7 @@ function walkChildren (
       walkChildren(child.children ?? [], states, components, depth + 1, ifInfo.condition || parentCondition, classify)
     } else {
       currentChain = null
+      chainConditions = []
       walkChildren(child.children ?? [], states, components, depth, parentCondition, classify)
     }
 
