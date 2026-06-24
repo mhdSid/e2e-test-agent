@@ -1,23 +1,3 @@
-export const VEE_VALIDATE_MARKERS = [
-  'useForm',
-  'useField',
-  'ErrorMessage',
-  'defineRule',
-  'toTypedSchema',
-  'meta.valid',
-  'meta.touched',
-  'meta.dirty',
-  'errors.'
-] as const
-
-export const SUBMIT_GATE_PATTERN = /:disabled="([^"]+)"/
-
-export const FORM_TAGS = ['form', 'Form'] as const
-
-export const FILTER_INPUT_HINTS = ['filter', 'search', 'query', 'sort', 'category'] as const
-
-export const VALIDATION_STATES = ['untouched', 'invalid', 'valid'] as const
-
 export const NODE_TYPE = {
   ELEMENT: 1,
   TEXT: 2,

@@ -6,8 +6,8 @@
     "forms": [],
     "components": [],
     "componentContracts": [],
-    "search": null,
-    "computeds": [],
+    "signals": [],
+    "transitions": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -31,7 +31,7 @@
         "visibleTestids": [
           "plan-status"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -43,7 +43,7 @@
         "visibleTestids": [
           "plan-status"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -55,7 +55,7 @@
         "visibleTestids": [
           "plan-badge"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_2"
@@ -67,7 +67,7 @@
         "visibleTestids": [
           "plan-book"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_3"
@@ -76,8 +76,8 @@
     "forms": [],
     "components": [],
     "componentContracts": [],
-    "search": null,
-    "computeds": [],
+    "signals": [],
+    "transitions": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -93,9 +93,9 @@
     "scenarios": [
       {
         "id": "state-0",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders when: plan.seats === 0",
-        "setup": "provide input satisfying: plan.seats === 0",
+        "setup": "reach the state where: plan.seats === 0 (provenance: data)",
         "expectVisible": [
           "plan-status"
         ],
@@ -104,9 +104,9 @@
       },
       {
         "id": "state-1",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders fallback branch",
-        "setup": "provide input so no prior condition matches",
+        "setup": "provide input so no sibling condition in the chain matches",
         "expectVisible": [
           "plan-status"
         ],
@@ -115,9 +115,9 @@
       },
       {
         "id": "state-2",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders when: plan.featured",
-        "setup": "provide input satisfying: plan.featured",
+        "setup": "reach the state where: plan.featured (provenance: data)",
         "expectVisible": [
           "plan-badge"
         ],
@@ -126,9 +126,9 @@
       },
       {
         "id": "state-3",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders when: plan.seats > 0",
-        "setup": "provide input satisfying: plan.seats > 0",
+        "setup": "reach the state where: plan.seats > 0 (provenance: data)",
         "expectVisible": [
           "plan-book"
         ],
@@ -152,7 +152,7 @@
           "result-name",
           "result-price"
         ],
-        "triggerKind": "user-action",
+        "provenance": "user-input",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -164,7 +164,7 @@
         "visibleTestids": [
           "no-results"
         ],
-        "triggerKind": "data",
+        "provenance": "user-input",
         "depth": 1,
         "parentCondition": "query",
         "chainId": "chain_1"
@@ -187,29 +187,38 @@
               "valid"
             ]
           }
-        ],
-        "usesVeeValidate": false
+        ]
       }
     ],
     "components": [],
     "componentContracts": [],
-    "search": {
-      "filters": [
-        {
-          "testid": "search-input",
-          "name": "query",
-          "affectsComputed": "results"
-        }
-      ],
-      "resultsTestid": "result-list",
-      "emptyTestid": "no-results",
-      "resultComputed": "results"
-    },
-    "computeds": [
+    "signals": [
+      {
+        "name": "query",
+        "kind": "ref",
+        "userMutable": true
+      },
       {
         "name": "results",
-        "deps": [
-          "query"
+        "kind": "computed",
+        "userMutable": false
+      }
+    ],
+    "transitions": [
+      {
+        "actuatorTestid": "search-input",
+        "via": "v-model",
+        "signal": "query",
+        "flipsStateIds": [
+          "IF_query"
+        ]
+      },
+      {
+        "actuatorTestid": "search-input",
+        "via": "v-model",
+        "signal": "query",
+        "flipsStateIds": [
+          "IF_results_length_____0"
         ]
       }
     ],
@@ -230,9 +239,9 @@
     "scenarios": [
       {
         "id": "state-0",
-        "kind": "user-action",
+        "provenance": "user-input",
         "description": "renders when: query",
-        "setup": "provide input satisfying: query",
+        "setup": "drive [search-input] so that: query",
         "expectVisible": [
           "result-count",
           "result-list",
@@ -245,9 +254,9 @@
       },
       {
         "id": "state-1",
-        "kind": "data",
+        "provenance": "user-input",
         "description": "renders when: results.length === 0",
-        "setup": "provide input satisfying: results.length === 0",
+        "setup": "drive [search-input] so that: results.length === 0",
         "expectVisible": [
           "no-results"
         ],
@@ -256,32 +265,10 @@
       },
       {
         "id": "form-valid-submit",
-        "kind": "validation",
+        "provenance": "user-input",
         "description": "all fields valid → submitting proceeds to the next state",
         "setup": "fill all fields with valid values and click search-btn; assert the resulting page/URL, NOT the submit button (the form navigates away)",
         "expectVisible": [],
-        "expectAbsent": [],
-        "vrtCheckpoint": true
-      },
-      {
-        "id": "filter-query",
-        "kind": "user-action",
-        "description": "applying query filter narrows results",
-        "setup": "set search-input, leave other filters empty",
-        "expectVisible": [
-          "result-list"
-        ],
-        "expectAbsent": [],
-        "vrtCheckpoint": false
-      },
-      {
-        "id": "search-empty",
-        "kind": "user-action",
-        "description": "filters matching nothing → empty state, zero result items",
-        "setup": "set filters that match no items",
-        "expectVisible": [
-          "no-results"
-        ],
         "expectAbsent": [],
         "vrtCheckpoint": true
       }
@@ -303,7 +290,7 @@
           "input-email",
           "submit-btn"
         ],
-        "triggerKind": "user-action",
+        "provenance": "route",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -316,7 +303,7 @@
           "error-msg",
           "back-link"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -350,19 +337,39 @@
               "valid"
             ]
           }
-        ],
-        "usesVeeValidate": false
+        ]
       }
     ],
     "components": [],
     "componentContracts": [],
-    "search": null,
-    "computeds": [
+    "signals": [
+      {
+        "name": "route",
+        "kind": "route",
+        "userMutable": false
+      },
+      {
+        "name": "router",
+        "kind": "route",
+        "userMutable": false
+      },
+      {
+        "name": "store",
+        "kind": "store",
+        "userMutable": false
+      },
       {
         "name": "plan",
-        "deps": []
+        "kind": "computed",
+        "userMutable": false
+      },
+      {
+        "name": "form",
+        "kind": "reactive",
+        "userMutable": true
       }
     ],
+    "transitions": [],
     "props": [],
     "storesUsed": [
       "useBookingStore"
@@ -384,9 +391,9 @@
     "scenarios": [
       {
         "id": "state-0",
-        "kind": "user-action",
+        "provenance": "route",
         "description": "renders when: plan && plan.seats > 0",
-        "setup": "provide input satisfying: plan && plan.seats > 0",
+        "setup": "reach the state where: plan && plan.seats > 0 (provenance: route)",
         "expectVisible": [
           "book-title",
           "book-price",
@@ -403,9 +410,9 @@
       },
       {
         "id": "state-1",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders fallback branch",
-        "setup": "provide input so no prior condition matches",
+        "setup": "provide input so no sibling condition in the chain matches",
         "expectVisible": [
           "error-msg",
           "back-link"
@@ -422,7 +429,7 @@
       },
       {
         "id": "form-valid-submit",
-        "kind": "validation",
+        "provenance": "user-input",
         "description": "all fields valid → submitting proceeds to the next state",
         "setup": "fill all fields with valid values and click submit-btn; assert the resulting page/URL, NOT the submit button (the form navigates away)",
         "expectVisible": [],
@@ -447,7 +454,7 @@
           "confirm-price",
           "back-home"
         ],
-        "triggerKind": "user-action",
+        "provenance": "store",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -460,7 +467,7 @@
           "no-booking",
           "back-plans"
         ],
-        "triggerKind": "user-action",
+        "provenance": "data",
         "depth": 0,
         "parentCondition": null,
         "chainId": "chain_0"
@@ -469,8 +476,14 @@
     "forms": [],
     "components": [],
     "componentContracts": [],
-    "search": null,
-    "computeds": [],
+    "signals": [
+      {
+        "name": "store",
+        "kind": "store",
+        "userMutable": false
+      }
+    ],
+    "transitions": [],
     "props": [],
     "storesUsed": [
       "useBookingStore"
@@ -493,9 +506,9 @@
     "scenarios": [
       {
         "id": "state-0",
-        "kind": "user-action",
+        "provenance": "store",
         "description": "renders when: store.booking",
-        "setup": "provide input satisfying: store.booking",
+        "setup": "reach the state where: store.booking (provenance: store)",
         "expectVisible": [
           "confirm-title",
           "confirm-name",
@@ -512,9 +525,9 @@
       },
       {
         "id": "state-1",
-        "kind": "user-action",
+        "provenance": "data",
         "description": "renders fallback branch",
-        "setup": "provide input so no prior condition matches",
+        "setup": "provide input so no sibling condition in the chain matches",
         "expectVisible": [
           "no-booking",
           "back-plans"

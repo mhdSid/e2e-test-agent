@@ -9,8 +9,7 @@ function summarizeOne (m: StateMachine): string {
   if (m.forms.length) {
     for (const f of m.forms) {
       lines.push(
-        `form ${f.formTestid}: submit=${f.submitTestid ?? 'none'} ` +
-        `gatedBy=${f.submitGatedBy ?? 'none'} veeValidate=${f.usesVeeValidate}`
+        `form ${f.formTestid}: submit=${f.submitTestid ?? 'none'} gatedBy=${f.submitGatedBy ?? 'none'}`
       )
       for (const field of f.fields) {
         lines.push(
@@ -21,12 +20,11 @@ function summarizeOne (m: StateMachine): string {
     }
   }
 
-  if (m.search) {
-    const filters = m.search.filters.map((f) => f.testid)
-    lines.push(
-      `search: filters=${list(filters)} results=${m.search.resultsTestid ?? 'none'} ` +
-      `empty=${m.search.emptyTestid ?? 'none'}`
-    )
+  if (m.transitions.length) {
+    lines.push('transitions (drive actuator → flips state):')
+    for (const t of m.transitions) {
+      lines.push(`  ${t.actuatorTestid ?? t.via} writes ${t.signal} → ${t.flipsStateIds.join(', ')}`)
+    }
   }
 
   const labels = Object.entries(m.texts)
@@ -38,7 +36,7 @@ function summarizeOne (m: StateMachine): string {
 
   lines.push('scenarios (cover every one):')
   for (const sc of m.scenarios) {
-    lines.push(`  - [${sc.id}] (${sc.kind}) ${sc.description}`)
+    lines.push(`  - [${sc.id}] (${sc.provenance}) ${sc.description}`)
     lines.push(`      setup: ${sc.setup}`)
     lines.push(`      expect visible ${list(sc.expectVisible)} absent ${list(sc.expectAbsent)}`)
   }

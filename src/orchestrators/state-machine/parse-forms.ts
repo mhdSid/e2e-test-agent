@@ -1,116 +1,97 @@
 import { parse } from '@vue/compiler-dom'
 import type { FormState, ValidationField } from './types'
-import { NODE_TYPE, DIRECTIVES, TESTID_ATTR, VEE_VALIDATE_MARKERS, SUBMIT_GATE_PATTERN } from './constants'
+import { analyzeExpression } from './graph/expression'
+import { NODE_TYPE, DIRECTIVES, TESTID_ATTR } from './constants'
 
 function getTestid (node: any): string | null {
   return node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content ?? null
 }
 
-function hasModel (node: any): boolean {
-  return (node.props ?? []).some((p: any) => p.name === DIRECTIVES.MODEL)
+function getModel (node: any): string | null {
+  return (node.props ?? []).find((p: any) => p.name === DIRECTIVES.MODEL)?.exp?.content ?? null
 }
 
 function isRequired (node: any): boolean {
   return (node.props ?? []).some((p: any) => p.name === 'required')
 }
 
-function getModelName (node: any): string {
-  const model = (node.props ?? []).find((p: any) => p.name === DIRECTIVES.MODEL)
-  return model?.exp?.content ?? getTestid(node) ?? 'unknown'
+function getIfCondition (node: any): string | null {
+  return (node.props ?? []).find((p: any) => p.name === DIRECTIVES.IF)?.exp?.content ?? null
 }
 
-function findInputs (node: any, inputs: any[]): void {
-  if (node.type === NODE_TYPE.ELEMENT) {
-    const tag: string = node.tag ?? ''
-    if ((tag === 'input' || tag === 'textarea' || tag === 'select' || tag.includes('Field')) && hasModel(node)) {
-      inputs.push(node)
-    }
-  }
-  for (const child of node.children ?? []) {
-    findInputs(child, inputs)
-  }
+/** The symbol a binding/guard hinges on — the leaf of a member access, else the root. */
+function bindingSymbol (expr: string | null): string | null {
+  if (!expr) return null
+  const refs = analyzeExpression(expr)
+  return refs.accesses[0]?.leaf ?? refs.roots[0] ?? null
 }
 
-function findErrorTestids (node: any, map: Map<string, string>): void {
+/** A field is any element with v-model — not a hard-coded tag list. */
+function findFields (node: any, out: any[]): void {
+  if (node.type === NODE_TYPE.ELEMENT && getModel(node)) out.push(node)
+  for (const child of node.children ?? []) findFields(child, out)
+}
+
+/**
+ * Error elements: any element with a testid whose v-if guard hinges on a symbol.
+ * The field↔error link is then a structural symbol match (the error guard reads the
+ * same symbol the field binds) — no `errors.(\w+)` regex, no library-name matching.
+ */
+function findErrorElements (node: any, out: { testid: string; symbol: string }[]): void {
   if (node.type === NODE_TYPE.ELEMENT) {
     const testid = getTestid(node)
-    // <span v-if="errors.email" data-testid="error-email">
-    for (const prop of node.props ?? []) {
-      if (prop.name === DIRECTIVES.IF) {
-        const cond: string = prop.exp?.content ?? ''
-        const errMatch = cond.match(/errors\.(\w+)/)
-        if (errMatch && testid) map.set(errMatch[1], testid)
-      }
-    }
-    // <ErrorMessage name="email" />
-    if ((node.tag ?? '').includes('ErrorMessage')) {
-      const nameProp = (node.props ?? []).find((p: any) => p.name === 'name')
-      const name = nameProp?.value?.content
-      if (name && testid) map.set(name, testid)
+    const cond = getIfCondition(node)
+    if (testid && cond) {
+      const symbol = bindingSymbol(cond)
+      if (symbol) out.push({ testid, symbol })
     }
   }
-  for (const child of node.children ?? []) {
-    findErrorTestids(child, map)
-  }
+  for (const child of node.children ?? []) findErrorElements(child, out)
 }
 
 function findForms (node: any, forms: any[]): void {
-  if (node.type === NODE_TYPE.ELEMENT) {
-    const tag: string = node.tag ?? ''
-    if (tag === 'form' || tag === 'Form') forms.push(node)
-  }
-  for (const child of node.children ?? []) {
-    findForms(child, forms)
-  }
+  if (node.type === NODE_TYPE.ELEMENT && (node.tag === 'form' || node.tag === 'Form')) forms.push(node)
+  for (const child of node.children ?? []) findForms(child, forms)
 }
 
 function findSubmit (node: any): { testid: string | null; gate: string | null } {
-  let result = { testid: null as string | null, gate: null as string | null }
   if (node.type === NODE_TYPE.ELEMENT) {
     const isSubmit = (node.props ?? []).some(
       (p: any) => p.name === 'type' && p.value?.content === 'submit'
     )
     if (isSubmit) {
-      result.testid = getTestid(node)
-      for (const prop of node.props ?? []) {
-        if (prop.name === DIRECTIVES.BIND && prop.arg?.content === 'disabled') {
-          result.gate = prop.exp?.content ?? null
-        }
-      }
-      return result
+      const gateProp = (node.props ?? []).find(
+        (p: any) => p.name === DIRECTIVES.BIND && p.arg?.content === 'disabled'
+      )
+      return { testid: getTestid(node), gate: gateProp?.exp?.content ?? null }
     }
   }
   for (const child of node.children ?? []) {
     const found = findSubmit(child)
     if (found.testid) return found
   }
-  return result
+  return { testid: null, gate: null }
 }
 
-export function parseForms (templateContent: string, scriptContent: string): FormState[] {
+export function parseForms (templateContent: string): FormState[] {
   const ast = parse(templateContent)
   const formNodes: any[] = []
   for (const child of ast.children ?? []) findForms(child, formNodes)
 
-  const usesVeeValidate = VEE_VALIDATE_MARKERS.some(
-    (marker) => scriptContent.includes(marker) || templateContent.includes(marker)
-  )
-
   return formNodes.map((formNode) => {
-    const inputs: any[] = []
-    findInputs(formNode, inputs)
+    const fieldNodes: any[] = []
+    findFields(formNode, fieldNodes)
 
-    const errorMap = new Map<string, string>()
-    findErrorTestids(formNode, errorMap)
+    const errors: { testid: string; symbol: string }[] = []
+    findErrorElements(formNode, errors)
 
-    const fields: ValidationField[] = inputs.map((input) => {
-      const name = getModelName(input)
-      const cleanName = name.replace(/^form\./, '').replace(/\.value$/, '')
+    const fields: ValidationField[] = fieldNodes.map((input) => {
+      const symbol = bindingSymbol(getModel(input)) ?? getTestid(input) ?? 'unknown'
       return {
         testid: getTestid(input) ?? 'unknown',
-        name: cleanName,
+        name: symbol,
         required: isRequired(input),
-        errorTestid: errorMap.get(cleanName) ?? null,
+        errorTestid: errors.find((e) => e.symbol === symbol)?.testid ?? null,
         states: ['untouched', 'invalid', 'valid']
       }
     })
@@ -121,8 +102,7 @@ export function parseForms (templateContent: string, scriptContent: string): For
       formTestid: getTestid(formNode) ?? 'form',
       submitTestid: submit.testid,
       submitGatedBy: submit.gate,
-      fields,
-      usesVeeValidate
+      fields
     }
   })
 }

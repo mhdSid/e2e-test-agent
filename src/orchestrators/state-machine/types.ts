@@ -1,11 +1,12 @@
-export type TriggerKind = 'route' | 'user-action' | 'data' | 'validation'
+import type { Provenance, SignalKind } from './graph/types'
 
 export interface StateNode {
   id: string
   condition: string
   isElse: boolean
   visibleTestids: string[]
-  triggerKind: TriggerKind
+  /** Where this state's guard data originates — derived by the pull/backward-slice. */
+  provenance: Provenance
   depth: number
   parentCondition: string | null
   /**
@@ -28,9 +29,9 @@ export interface ValidationField {
 export interface FormState {
   formTestid: string
   submitTestid: string | null
+  /** the signal expression gating the submit button's :disabled, if any. */
   submitGatedBy: string | null
   fields: ValidationField[]
-  usesVeeValidate: boolean
 }
 
 export interface ComponentProp {
@@ -64,22 +65,23 @@ export interface ComponentContract {
   states: ComponentStateContract[]
 }
 
-export interface FilterControl {
-  testid: string
+/** A reactive source surfaced in the machine output (for inspection/prompts). */
+export interface SignalSummary {
   name: string
-  affectsComputed: string | null
+  kind: SignalKind
+  userMutable: boolean
 }
 
-export interface SearchState {
-  filters: FilterControl[]
-  resultsTestid: string | null
-  emptyTestid: string | null
-  resultComputed: string | null
-}
-
-export interface ComputedDep {
-  name: string
-  deps: string[]
+/**
+ * An event→state edge: driving `actuatorTestid` changes `signal`, which (by the
+ * push/dirty-mark) can flip the listed states. This is the State-Flow-Graph edge —
+ * derived generically, replacing the old keyword "search/filter" detection.
+ */
+export interface Transition {
+  actuatorTestid: string | null
+  via: string
+  signal: string
+  flipsStateIds: string[]
 }
 
 export interface StateMachine {
@@ -89,8 +91,8 @@ export interface StateMachine {
   forms: FormState[]
   components: ComponentUsage[]
   componentContracts: ComponentContract[]
-  search: SearchState | null
-  computeds: ComputedDep[]
+  signals: SignalSummary[]
+  transitions: Transition[]
   props: string[]
   storesUsed: string[]
   texts: Record<string, string>
@@ -101,7 +103,7 @@ export interface StateMachine {
 
 export interface Scenario {
   id: string
-  kind: TriggerKind
+  provenance: Provenance
   description: string
   setup: string
   expectVisible: string[]

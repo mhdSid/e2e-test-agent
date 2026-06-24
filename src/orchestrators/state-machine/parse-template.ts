@@ -1,6 +1,10 @@
 import { parse } from '@vue/compiler-dom'
-import type { StateNode, ComponentUsage, ComponentProp, TriggerKind } from './types'
+import type { StateNode, ComponentUsage, ComponentProp } from './types'
+import type { Provenance } from './graph/types'
 import { NODE_TYPE, TAG_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR, FRAMEWORK_COMPONENTS } from './constants'
+
+/** A guard → provenance classifier, injected so parse-template stays graph-agnostic. */
+export type Classify = (condition: string) => Provenance
 
 interface ParsedTemplate {
   states: StateNode[]
@@ -76,13 +80,6 @@ function getComponentProps (node: any): ComponentProp[] {
   return props
 }
 
-function classifyTrigger (condition: string): TriggerKind {
-  if (condition.includes('errors.') || condition.includes('meta.')) return 'validation'
-  if (condition.includes('route') || condition.includes('params')) return 'route'
-  if (condition.includes('.length') || condition.includes('results') || condition.includes('items')) return 'data'
-  return 'user-action'
-}
-
 /**
  * Collect component usages — anything @vue/compiler-dom classifies as a component
  * (tagType COMPONENT), DS-prefixed or custom, minus framework components. The old
@@ -114,7 +111,8 @@ function walkChildren (
   states: StateNode[],
   components: ComponentUsage[],
   depth: number,
-  parentCondition: string | null
+  parentCondition: string | null,
+  classify: Classify
 ): void {
   let currentChain: string | null = null
 
@@ -138,16 +136,17 @@ function walkChildren (
         condition: ifInfo.condition,
         isElse,
         visibleTestids: collectScopedTestids(child, true),
-        triggerKind: classifyTrigger(ifInfo.condition),
+        // else branches inherit the chain's discriminating condition for provenance
+        provenance: classify(ifInfo.condition || parentCondition || ''),
         depth,
         parentCondition,
         chainId: currentChain
       })
 
-      walkChildren(child.children ?? [], states, components, depth + 1, ifInfo.condition || parentCondition)
+      walkChildren(child.children ?? [], states, components, depth + 1, ifInfo.condition || parentCondition, classify)
     } else {
       currentChain = null
-      walkChildren(child.children ?? [], states, components, depth, parentCondition)
+      walkChildren(child.children ?? [], states, components, depth, parentCondition, classify)
     }
 
     collectComponent(child, components)
@@ -182,12 +181,15 @@ function collectTexts (node: any, texts: Record<string, string>): void {
   for (const child of node.children ?? []) collectTexts(child, texts)
 }
 
-export function parseTemplate (templateContent: string): ParsedTemplate {
+export function parseTemplate (
+  templateContent: string,
+  classify: Classify = () => 'data'
+): ParsedTemplate {
   const ast = parse(templateContent)
   const states: StateNode[] = []
   const components: ComponentUsage[] = []
 
-  walkChildren(ast.children ?? [], states, components, 0, null)
+  walkChildren(ast.children ?? [], states, components, 0, null, classify)
 
   const allTestids: string[] = []
   const texts: Record<string, string> = {}
