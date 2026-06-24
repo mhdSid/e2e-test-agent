@@ -180,12 +180,7 @@
             "testid": "search-input",
             "name": "query",
             "required": false,
-            "errorTestid": null,
-            "states": [
-              "untouched",
-              "invalid",
-              "valid"
-            ]
+            "errorTestid": null
           }
         ]
       }
@@ -319,23 +314,13 @@
             "testid": "input-name",
             "name": "name",
             "required": true,
-            "errorTestid": null,
-            "states": [
-              "untouched",
-              "invalid",
-              "valid"
-            ]
+            "errorTestid": null
           },
           {
             "testid": "input-email",
             "name": "email",
             "required": true,
-            "errorTestid": null,
-            "states": [
-              "untouched",
-              "invalid",
-              "valid"
-            ]
+            "errorTestid": null
           }
         ]
       }

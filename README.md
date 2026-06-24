@@ -8,7 +8,7 @@ No invented selectors. No hand-maintained component registry. The agent only
 asserts what the real app renders.
 
 > Proven on the bundled `example/` app: `probe → statemachine → plan → generate → gate`
-> passes the gate, and the generated spec runs **23/23 green** in Playwright.
+> passes the gate, and the generated spec runs **24/24 green** in Playwright.
 
 ---
 
