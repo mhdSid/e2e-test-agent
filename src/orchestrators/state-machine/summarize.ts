@@ -34,6 +34,14 @@ function summarizeOne (m: StateMachine): string {
     lines.push('  → assert these with toContainText("label"), or toHaveText("label <value>") only when you supplied <value> via a journey. Never assert the bare label as the full text.')
   }
 
+  if (m.journeys.length) {
+    lines.push('reachability (deterministic steps to drive the app into each state — use these, do not guess):')
+    for (const j of m.journeys) {
+      const tag = j.crossRoute ? ' [cross-route]' : ''
+      lines.push(`  ${j.stateId}${tag}: ${j.steps.join('  →  ')}`)
+    }
+  }
+
   lines.push('scenarios (cover every one):')
   for (const sc of m.scenarios) {
     lines.push(`  - [${sc.id}] (${sc.provenance}) ${sc.description}`)

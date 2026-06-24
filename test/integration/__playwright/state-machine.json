@@ -8,6 +8,7 @@
     "componentContracts": [],
     "signals": [],
     "transitions": [],
+    "journeys": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -78,6 +79,36 @@
     "componentContracts": [],
     "signals": [],
     "transitions": [],
+    "journeys": [
+      {
+        "stateId": "IF_plan_seats_____0",
+        "steps": [
+          "goto /#/plans"
+        ],
+        "crossRoute": false
+      },
+      {
+        "stateId": "ELSE_1",
+        "steps": [
+          "goto /#/plans"
+        ],
+        "crossRoute": false
+      },
+      {
+        "stateId": "IF_plan_featured",
+        "steps": [
+          "goto /#/plans"
+        ],
+        "crossRoute": false
+      },
+      {
+        "stateId": "IF_plan_seats___0",
+        "steps": [
+          "goto /#/plans"
+        ],
+        "crossRoute": false
+      }
+    ],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -175,6 +206,7 @@
         "formTestid": "search-form",
         "submitTestid": "search-btn",
         "submitGatedBy": null,
+        "submitNavigatesTo": null,
         "fields": [
           {
             "testid": "search-input",
@@ -215,6 +247,24 @@
         "flipsStateIds": [
           "IF_results_length_____0"
         ]
+      }
+    ],
+    "journeys": [
+      {
+        "stateId": "IF_query",
+        "steps": [
+          "goto /#/search",
+          "drive search-input"
+        ],
+        "crossRoute": false
+      },
+      {
+        "stateId": "IF_results_length_____0",
+        "steps": [
+          "goto /#/search",
+          "drive search-input"
+        ],
+        "crossRoute": false
       }
     ],
     "props": [],
@@ -309,6 +359,7 @@
         "formTestid": "book-form",
         "submitTestid": "submit-btn",
         "submitGatedBy": null,
+        "submitNavigatesTo": "/confirm",
         "fields": [
           {
             "testid": "input-name",
@@ -355,6 +406,22 @@
       }
     ],
     "transitions": [],
+    "journeys": [
+      {
+        "stateId": "IF_plan____plan_seats___0",
+        "steps": [
+          "goto /#/book/1"
+        ],
+        "crossRoute": false
+      },
+      {
+        "stateId": "ELSE_1",
+        "steps": [
+          "goto /#/book/1"
+        ],
+        "crossRoute": false
+      }
+    ],
     "props": [],
     "storesUsed": [
       "useBookingStore"
@@ -469,6 +536,25 @@
       }
     ],
     "transitions": [],
+    "journeys": [
+      {
+        "stateId": "IF_store_booking",
+        "steps": [
+          "goto /#/book/1",
+          "fill input-name with a valid value",
+          "fill input-email with a valid value",
+          "click submit-btn → navigates to /#/confirm"
+        ],
+        "crossRoute": true
+      },
+      {
+        "stateId": "ELSE_1",
+        "steps": [
+          "goto /#/confirm"
+        ],
+        "crossRoute": false
+      }
+    ],
     "props": [],
     "storesUsed": [
       "useBookingStore"

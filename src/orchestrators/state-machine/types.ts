@@ -30,6 +30,8 @@ export interface FormState {
   submitTestid: string | null
   /** the signal expression gating the submit button's :disabled, if any. */
   submitGatedBy: string | null
+  /** route this form's submit navigates to (router.push), if any. */
+  submitNavigatesTo: string | null
   fields: ValidationField[]
 }
 
@@ -83,6 +85,19 @@ export interface Transition {
   flipsStateIds: string[]
 }
 
+/**
+ * Deterministic steps to drive the app into a state — derived from the reactive graph
+ * (within-component actuators) and cross-route navigation edges (a form elsewhere whose
+ * submit router.push-es here). This is reachability the RDG hands the generator/repair,
+ * instead of the LLM guessing the journey.
+ */
+export interface Journey {
+  stateId: string
+  steps: string[]
+  /** true when reaching the state requires a journey from another route. */
+  crossRoute: boolean
+}
+
 export interface StateMachine {
   file: string
   route: string
@@ -92,6 +107,7 @@ export interface StateMachine {
   componentContracts: ComponentContract[]
   signals: SignalSummary[]
   transitions: Transition[]
+  journeys: Journey[]
   props: string[]
   storesUsed: string[]
   texts: Record<string, string>

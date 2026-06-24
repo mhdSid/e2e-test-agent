@@ -15,7 +15,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import type { Adapter } from '../../core/types'
 import { FILES } from '../../core/constants'
-import type { StateMachine, Transition, SignalSummary } from './types'
+import type { StateMachine, Transition, SignalSummary, Journey } from './types'
 import { parseTemplate } from './parse-template'
 import { parseForms } from './parse-forms'
 import { extractSignals } from './graph/signals'
@@ -38,7 +38,7 @@ export function generateStateMachine (
   const graph = buildReactiveGraph(model, templateContent)
 
   const { states, components, texts } = parseTemplate(templateContent, (cond) => provenanceOf(graph, cond))
-  const forms = parseForms(templateContent)
+  const forms = parseForms(templateContent, model.handlerNavigations)
 
   // PUSH: which actuators flip each state → transitions (the State-Flow-Graph edges).
   const actuatorsByState = new Map<string, string[]>()
@@ -52,6 +52,14 @@ export function generateStateMachine (
       transitions.push({ actuatorTestid: a.testid, via: a.via, signal: a.target, flipsStateIds: [state.id] })
     }
   }
+
+  // Within-component reachability: navigate the route, then drive any flipping actuators.
+  // runStateMachine enriches store-/data-states with cross-route journeys afterwards.
+  const journeys: Journey[] = states.map((state) => {
+    const steps = [`goto ${route}`]
+    for (const a of actuatorsByState.get(state.id) ?? []) steps.push(`drive ${a}`)
+    return { stateId: state.id, steps, crossRoute: false }
+  })
 
   const componentContracts = deriveContracts(components, model.importMap, sfcPath, aliases)
   const scenarios = synthesizeScenarios(states, forms, actuatorsByState)
@@ -71,12 +79,58 @@ export function generateStateMachine (
     componentContracts,
     signals,
     transitions,
+    journeys,
     props: model.props,
     storesUsed: model.storesUsed,
     texts,
     localImports: model.localImports,
     globalImports: model.globalImports,
     scenarios
+  }
+}
+
+/** The path after the hash, e.g. '/#/confirm' → '/confirm', so router.push targets match routes. */
+function routePath (route: string): string {
+  const i = route.indexOf('#')
+  return (i >= 0 ? route.slice(i + 1) : route) || '/'
+}
+
+/**
+ * Cross-route reachability (the interprocedural step): a state whose data comes from a
+ * store/elsewhere and has no local actuator is reached by the journey of whichever form,
+ * on another route, navigates here on submit. This is how ConfirmView's booking state
+ * gets "goto /#/book/1 → fill → submit" deterministically, instead of the LLM guessing.
+ */
+function enrichCrossRouteJourneys (machines: StateMachine[]): void {
+  const entryByRoute = new Map<string, { fromRoute: string; fields: string[]; submit: string | null }>()
+  for (const m of machines) {
+    for (const f of m.forms) {
+      if (f.submitNavigatesTo) {
+        entryByRoute.set(f.submitNavigatesTo, {
+          fromRoute: m.route,
+          fields: f.fields.map((fld) => fld.testid).filter((t) => t !== 'unknown'),
+          submit: f.submitTestid
+        })
+      }
+    }
+  }
+
+  for (const m of machines) {
+    const entry = entryByRoute.get(routePath(m.route))
+    if (!entry) continue
+    for (const journey of m.journeys) {
+      const state = m.states.find((s) => s.id === journey.stateId)
+      if (!state || state.isElse) continue
+      const locallyReachable = journey.steps.length > 1
+      if ((state.provenance === 'store' || state.provenance === 'data') && !locallyReachable) {
+        journey.steps = [
+          `goto ${entry.fromRoute}`,
+          ...entry.fields.map((f) => `fill ${f} with a valid value`),
+          entry.submit ? `click ${entry.submit} → navigates to ${m.route}` : `submit → navigates to ${m.route}`
+        ]
+        journey.crossRoute = true
+      }
+    }
   }
 }
 
@@ -119,6 +173,9 @@ export function runStateMachine (outDir: string, adapter: Adapter): StateMachine
       console.error(`  ✗ ${route.sfc}: ${msg}`)
     }
   }
+
+  // Global pass: link cross-route journeys once every machine exists.
+  enrichCrossRouteJourneys(machines)
 
   const out = resolve(outDir, FILES.STATE_MACHINE)
   mkdirSync(dirname(out), { recursive: true })

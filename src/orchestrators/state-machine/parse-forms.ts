@@ -19,6 +19,14 @@ function getIfCondition (node: any): string | null {
   return (node.props ?? []).find((p: any) => p.name === DIRECTIVES.IF)?.exp?.content ?? null
 }
 
+/** The handler bound to `@submit` on a <form>, if any. */
+function getSubmitHandler (node: any): string | null {
+  const onSubmit = (node.props ?? []).find(
+    (p: any) => p.name === DIRECTIVES.ON && p.arg?.content === 'submit'
+  )
+  return onSubmit?.exp?.content ? analyzeExpression(onSubmit.exp.content).roots[0] ?? null : null
+}
+
 /** The symbol a binding/guard hinges on — the leaf of a member access, else the root. */
 function bindingSymbol (expr: string | null): string | null {
   if (!expr) return null
@@ -73,7 +81,10 @@ function findSubmit (node: any): { testid: string | null; gate: string | null } 
   return { testid: null, gate: null }
 }
 
-export function parseForms (templateContent: string): FormState[] {
+export function parseForms (
+  templateContent: string,
+  handlerNavigations: Record<string, string[]> = {}
+): FormState[] {
   const ast = parse(templateContent)
   const formNodes: any[] = []
   for (const child of ast.children ?? []) findForms(child, formNodes)
@@ -96,11 +107,14 @@ export function parseForms (templateContent: string): FormState[] {
     })
 
     const submit = findSubmit(formNode)
+    const submitHandler = getSubmitHandler(formNode)
+    const submitNavigatesTo = submitHandler ? handlerNavigations[submitHandler]?.[0] ?? null : null
 
     return {
       formTestid: getTestid(formNode) ?? 'form',
       submitTestid: submit.testid,
       submitGatedBy: submit.gate,
+      submitNavigatesTo,
       fields
     }
   })

@@ -14,6 +14,8 @@ export interface ScriptModel {
   storesUsed: string[]
   /** handler/function name → signal roots it writes (assignments, ++/--). */
   handlerMutations: Record<string, string[]>
+  /** handler/function name → route paths it navigates to (router.push/replace). */
+  handlerNavigations: Record<string, string[]>
 }
 
 /** Root signals written by assignments / increments anywhere inside a node. */
@@ -32,6 +34,23 @@ function mutationsIn (node: TsNode): string[] {
     if (INCDEC.has(u.getOperatorToken().toString())) record(u.getOperand())
   }
   return [...out]
+}
+
+/** Route paths a node navigates to — `router.push('/x')` / `.replace('/x')`. */
+function navigationsIn (node: TsNode): string[] {
+  const out: string[] = []
+  for (const call of node.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+    const ex = call.getExpression()
+    if (!Node.isPropertyAccessExpression(ex)) continue
+    const method = ex.getName()
+    if (method !== 'push' && method !== 'replace') continue
+    const arg = call.getArguments()[0]
+    if (arg && Node.isStringLiteral(arg)) {
+      const value = arg.getLiteralValue()
+      if (value.startsWith('/')) out.push(value)
+    }
+  }
+  return out
 }
 
 const VUE_REFS = new Set(['ref', 'shallowRef'])
@@ -168,16 +187,22 @@ export function extractSignals (
     }
   }
 
-  // handler name → signals it writes (so event-driven state is user-input, not data)
+  // handler name → signals it writes / routes it navigates to
   const handlerMutations: Record<string, string[]> = {}
+  const handlerNavigations: Record<string, string[]> = {}
+  const record = (name: string, body: TsNode): void => {
+    handlerMutations[name] = mutationsIn(body)
+    const nav = navigationsIn(body)
+    if (nav.length) handlerNavigations[name] = nav
+  }
   for (const fn of sf.getFunctions()) {
     const name = fn.getName()
-    if (name) handlerMutations[name] = mutationsIn(fn)
+    if (name) record(name, fn)
   }
   for (const decl of sf.getVariableDeclarations()) {
     const init = decl.getInitializer()
     if (init && (Node.isArrowFunction(init) || Node.isCallExpression(init) || Node.isFunctionExpression(init))) {
-      handlerMutations[decl.getName()] = mutationsIn(init)
+      record(decl.getName(), init)
     }
   }
 
@@ -188,6 +213,7 @@ export function extractSignals (
     globalImports,
     props,
     storesUsed: [...new Set(storesUsed)],
-    handlerMutations
+    handlerMutations,
+    handlerNavigations
   }
 }
