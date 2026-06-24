@@ -1,0 +1,534 @@
+[
+  {
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/HomeView.vue",
+    "route": "/#/",
+    "states": [],
+    "forms": [],
+    "components": [],
+    "componentContracts": [],
+    "search": null,
+    "computeds": [],
+    "props": [],
+    "storesUsed": [],
+    "texts": {
+      "home-title": "Hotel Booking",
+      "home-subtitle": "Find and book your perfect stay",
+      "home-cta-plans": "Browse Plans",
+      "home-cta-search": "Search"
+    },
+    "localImports": [],
+    "globalImports": [],
+    "scenarios": []
+  },
+  {
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/PlansView.vue",
+    "route": "/#/plans",
+    "states": [
+      {
+        "id": "IF_plan_seats_____0",
+        "condition": "plan.seats === 0",
+        "isElse": false,
+        "visibleTestids": [
+          "plan-status"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      },
+      {
+        "id": "ELSE_1",
+        "condition": "",
+        "isElse": true,
+        "visibleTestids": [
+          "plan-status"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      },
+      {
+        "id": "IF_plan_featured",
+        "condition": "plan.featured",
+        "isElse": false,
+        "visibleTestids": [
+          "plan-badge"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_2"
+      },
+      {
+        "id": "IF_plan_seats___0",
+        "condition": "plan.seats > 0",
+        "isElse": false,
+        "visibleTestids": [
+          "plan-book"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_3"
+      }
+    ],
+    "forms": [],
+    "components": [],
+    "componentContracts": [],
+    "search": null,
+    "computeds": [],
+    "props": [],
+    "storesUsed": [],
+    "texts": {
+      "plans-title": "Available Plans",
+      "plan-status": "seats",
+      "plan-badge": "Featured",
+      "plan-book": "Book"
+    },
+    "localImports": [
+      "../plans"
+    ],
+    "globalImports": [],
+    "scenarios": [
+      {
+        "id": "state-0",
+        "kind": "user-action",
+        "description": "renders when: plan.seats === 0",
+        "setup": "provide input satisfying: plan.seats === 0",
+        "expectVisible": [
+          "plan-status"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-1",
+        "kind": "user-action",
+        "description": "renders fallback branch",
+        "setup": "provide input so no prior condition matches",
+        "expectVisible": [
+          "plan-status"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-2",
+        "kind": "user-action",
+        "description": "renders when: plan.featured",
+        "setup": "provide input satisfying: plan.featured",
+        "expectVisible": [
+          "plan-badge"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-3",
+        "kind": "user-action",
+        "description": "renders when: plan.seats > 0",
+        "setup": "provide input satisfying: plan.seats > 0",
+        "expectVisible": [
+          "plan-book"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      }
+    ]
+  },
+  {
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/SearchView.vue",
+    "route": "/#/search",
+    "states": [
+      {
+        "id": "IF_query",
+        "condition": "query",
+        "isElse": false,
+        "visibleTestids": [
+          "result-count",
+          "result-list",
+          "result-item",
+          "result-name",
+          "result-price"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      },
+      {
+        "id": "IF_results_length_____0",
+        "condition": "results.length === 0",
+        "isElse": false,
+        "visibleTestids": [
+          "no-results"
+        ],
+        "triggerKind": "data",
+        "depth": 1,
+        "parentCondition": "query",
+        "chainId": "chain_1"
+      }
+    ],
+    "forms": [
+      {
+        "formTestid": "search-form",
+        "submitTestid": "search-btn",
+        "submitGatedBy": null,
+        "fields": [
+          {
+            "testid": "search-input",
+            "name": "query",
+            "required": false,
+            "errorTestid": null,
+            "states": [
+              "untouched",
+              "invalid",
+              "valid"
+            ]
+          }
+        ],
+        "usesVeeValidate": false
+      }
+    ],
+    "components": [],
+    "componentContracts": [],
+    "search": {
+      "filters": [
+        {
+          "testid": "search-input",
+          "name": "query",
+          "affectsComputed": "results"
+        }
+      ],
+      "resultsTestid": "result-list",
+      "emptyTestid": "no-results",
+      "resultComputed": "results"
+    },
+    "computeds": [
+      {
+        "name": "results",
+        "deps": [
+          "query"
+        ]
+      }
+    ],
+    "props": [],
+    "storesUsed": [],
+    "texts": {
+      "search-title": "Search Plans",
+      "search-btn": "Search",
+      "result-count": "result(s)",
+      "no-results": "No plans found"
+    },
+    "localImports": [
+      "../plans"
+    ],
+    "globalImports": [
+      "vue"
+    ],
+    "scenarios": [
+      {
+        "id": "state-0",
+        "kind": "user-action",
+        "description": "renders when: query",
+        "setup": "provide input satisfying: query",
+        "expectVisible": [
+          "result-count",
+          "result-list",
+          "result-item",
+          "result-name",
+          "result-price"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-1",
+        "kind": "data",
+        "description": "renders when: results.length === 0",
+        "setup": "provide input satisfying: results.length === 0",
+        "expectVisible": [
+          "no-results"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "form-valid-submit",
+        "kind": "validation",
+        "description": "all fields valid → submitting proceeds to the next state",
+        "setup": "fill all fields with valid values and click search-btn; assert the resulting page/URL, NOT the submit button (the form navigates away)",
+        "expectVisible": [],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "filter-query",
+        "kind": "user-action",
+        "description": "applying query filter narrows results",
+        "setup": "set search-input, leave other filters empty",
+        "expectVisible": [
+          "result-list"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": false
+      },
+      {
+        "id": "search-empty",
+        "kind": "user-action",
+        "description": "filters matching nothing → empty state, zero result items",
+        "setup": "set filters that match no items",
+        "expectVisible": [
+          "no-results"
+        ],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      }
+    ]
+  },
+  {
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/BookView.vue",
+    "route": "/#/book/1",
+    "states": [
+      {
+        "id": "IF_plan____plan_seats___0",
+        "condition": "plan && plan.seats > 0",
+        "isElse": false,
+        "visibleTestids": [
+          "book-title",
+          "book-price",
+          "book-form",
+          "input-name",
+          "input-email",
+          "submit-btn"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      },
+      {
+        "id": "ELSE_1",
+        "condition": "",
+        "isElse": true,
+        "visibleTestids": [
+          "error-msg",
+          "back-link"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      }
+    ],
+    "forms": [
+      {
+        "formTestid": "book-form",
+        "submitTestid": "submit-btn",
+        "submitGatedBy": null,
+        "fields": [
+          {
+            "testid": "input-name",
+            "name": "name",
+            "required": true,
+            "errorTestid": null,
+            "states": [
+              "untouched",
+              "invalid",
+              "valid"
+            ]
+          },
+          {
+            "testid": "input-email",
+            "name": "email",
+            "required": true,
+            "errorTestid": null,
+            "states": [
+              "untouched",
+              "invalid",
+              "valid"
+            ]
+          }
+        ],
+        "usesVeeValidate": false
+      }
+    ],
+    "components": [],
+    "componentContracts": [],
+    "search": null,
+    "computeds": [
+      {
+        "name": "plan",
+        "deps": []
+      }
+    ],
+    "props": [],
+    "storesUsed": [
+      "useBookingStore"
+    ],
+    "texts": {
+      "book-title": "Book:",
+      "submit-btn": "Confirm Booking",
+      "error-msg": "Plan unavailable",
+      "back-link": "Back to plans"
+    },
+    "localImports": [
+      "../plans",
+      "../stores/booking"
+    ],
+    "globalImports": [
+      "vue",
+      "vue-router"
+    ],
+    "scenarios": [
+      {
+        "id": "state-0",
+        "kind": "user-action",
+        "description": "renders when: plan && plan.seats > 0",
+        "setup": "provide input satisfying: plan && plan.seats > 0",
+        "expectVisible": [
+          "book-title",
+          "book-price",
+          "book-form",
+          "input-name",
+          "input-email",
+          "submit-btn"
+        ],
+        "expectAbsent": [
+          "error-msg",
+          "back-link"
+        ],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-1",
+        "kind": "user-action",
+        "description": "renders fallback branch",
+        "setup": "provide input so no prior condition matches",
+        "expectVisible": [
+          "error-msg",
+          "back-link"
+        ],
+        "expectAbsent": [
+          "book-title",
+          "book-price",
+          "book-form",
+          "input-name",
+          "input-email",
+          "submit-btn"
+        ],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "form-valid-submit",
+        "kind": "validation",
+        "description": "all fields valid → submitting proceeds to the next state",
+        "setup": "fill all fields with valid values and click submit-btn; assert the resulting page/URL, NOT the submit button (the form navigates away)",
+        "expectVisible": [],
+        "expectAbsent": [],
+        "vrtCheckpoint": true
+      }
+    ]
+  },
+  {
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/ConfirmView.vue",
+    "route": "/#/confirm",
+    "states": [
+      {
+        "id": "IF_store_booking",
+        "condition": "store.booking",
+        "isElse": false,
+        "visibleTestids": [
+          "confirm-title",
+          "confirm-name",
+          "confirm-email",
+          "confirm-plan",
+          "confirm-price",
+          "back-home"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      },
+      {
+        "id": "ELSE_1",
+        "condition": "",
+        "isElse": true,
+        "visibleTestids": [
+          "no-booking",
+          "back-plans"
+        ],
+        "triggerKind": "user-action",
+        "depth": 0,
+        "parentCondition": null,
+        "chainId": "chain_0"
+      }
+    ],
+    "forms": [],
+    "components": [],
+    "componentContracts": [],
+    "search": null,
+    "computeds": [],
+    "props": [],
+    "storesUsed": [
+      "useBookingStore"
+    ],
+    "texts": {
+      "confirm-title": "Booking Confirmed",
+      "confirm-name": "Name:",
+      "confirm-email": "Email:",
+      "confirm-plan": "Plan:",
+      "confirm-price": "Total:",
+      "back-home": "Back to home",
+      "no-booking": "No active booking",
+      "back-plans": "Browse plans"
+    },
+    "localImports": [
+      "../stores/booking",
+      "../plans"
+    ],
+    "globalImports": [],
+    "scenarios": [
+      {
+        "id": "state-0",
+        "kind": "user-action",
+        "description": "renders when: store.booking",
+        "setup": "provide input satisfying: store.booking",
+        "expectVisible": [
+          "confirm-title",
+          "confirm-name",
+          "confirm-email",
+          "confirm-plan",
+          "confirm-price",
+          "back-home"
+        ],
+        "expectAbsent": [
+          "no-booking",
+          "back-plans"
+        ],
+        "vrtCheckpoint": true
+      },
+      {
+        "id": "state-1",
+        "kind": "user-action",
+        "description": "renders fallback branch",
+        "setup": "provide input so no prior condition matches",
+        "expectVisible": [
+          "no-booking",
+          "back-plans"
+        ],
+        "expectAbsent": [
+          "confirm-title",
+          "confirm-name",
+          "confirm-email",
+          "confirm-plan",
+          "confirm-price",
+          "back-home"
+        ],
+        "vrtCheckpoint": true
+      }
+    ]
+  }
+]

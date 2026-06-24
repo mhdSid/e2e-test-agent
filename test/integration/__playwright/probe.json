@@ -1,0 +1,361 @@
+[
+  {
+    "route": "home",
+    "path": "/#/",
+    "statusCode": 200,
+    "heading": "Hotel Booking",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "home-root",
+        "text": ""
+      },
+      {
+        "testid": "home-title",
+        "text": "Hotel Booking"
+      },
+      {
+        "testid": "home-subtitle",
+        "text": "Find and book your perfect stay"
+      },
+      {
+        "testid": "home-actions",
+        "text": ""
+      },
+      {
+        "testid": "home-cta-plans",
+        "text": "Browse Plans"
+      },
+      {
+        "testid": "home-cta-search",
+        "text": "Search"
+      }
+    ],
+    "forms": []
+  },
+  {
+    "route": "plans",
+    "path": "/#/plans",
+    "statusCode": 200,
+    "heading": "Available Plans",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "plans-root",
+        "text": ""
+      },
+      {
+        "testid": "plans-title",
+        "text": "Available Plans"
+      },
+      {
+        "testid": "plan-list",
+        "text": ""
+      },
+      {
+        "testid": "plan-item",
+        "text": ""
+      },
+      {
+        "testid": "plan-name",
+        "text": "Basic"
+      },
+      {
+        "testid": "plan-price",
+        "text": "¥3,000"
+      },
+      {
+        "testid": "plan-status",
+        "text": "10 seats"
+      },
+      {
+        "testid": "plan-book",
+        "text": "Book"
+      },
+      {
+        "testid": "plan-item",
+        "text": ""
+      },
+      {
+        "testid": "plan-name",
+        "text": "Standard"
+      },
+      {
+        "testid": "plan-price",
+        "text": "¥6,000"
+      },
+      {
+        "testid": "plan-status",
+        "text": "5 seats"
+      },
+      {
+        "testid": "plan-badge",
+        "text": "Featured"
+      },
+      {
+        "testid": "plan-book",
+        "text": "Book"
+      },
+      {
+        "testid": "plan-item",
+        "text": ""
+      },
+      {
+        "testid": "plan-name",
+        "text": "Premium"
+      },
+      {
+        "testid": "plan-price",
+        "text": "¥9,000"
+      },
+      {
+        "testid": "plan-status",
+        "text": "Sold out"
+      },
+      {
+        "testid": "plan-badge",
+        "text": "Featured"
+      }
+    ],
+    "forms": []
+  },
+  {
+    "route": "search",
+    "path": "/#/search",
+    "statusCode": 200,
+    "heading": "Search Plans",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "search-root",
+        "text": ""
+      },
+      {
+        "testid": "search-title",
+        "text": "Search Plans"
+      },
+      {
+        "testid": "search-form",
+        "text": ""
+      },
+      {
+        "testid": "search-input",
+        "text": ""
+      },
+      {
+        "testid": "search-btn",
+        "text": "Search"
+      }
+    ],
+    "forms": [
+      {
+        "action": null,
+        "method": "GET",
+        "inputs": [
+          {
+            "name": null,
+            "type": "input",
+            "placeholder": "Search by name...",
+            "testid": "search-input",
+            "required": false
+          }
+        ],
+        "submit": "search-btn"
+      }
+    ]
+  },
+  {
+    "route": "book-valid",
+    "path": "/#/book/1",
+    "statusCode": 200,
+    "heading": "Book: Basic",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "book-root",
+        "text": ""
+      },
+      {
+        "testid": "book-title",
+        "text": "Book: Basic"
+      },
+      {
+        "testid": "book-price",
+        "text": "¥3,000"
+      },
+      {
+        "testid": "book-form",
+        "text": ""
+      },
+      {
+        "testid": "input-name",
+        "text": ""
+      },
+      {
+        "testid": "input-email",
+        "text": ""
+      },
+      {
+        "testid": "submit-btn",
+        "text": "Confirm Booking"
+      }
+    ],
+    "forms": [
+      {
+        "action": null,
+        "method": "GET",
+        "inputs": [
+          {
+            "name": "name",
+            "type": "input",
+            "placeholder": "Your name",
+            "testid": "input-name",
+            "required": true
+          },
+          {
+            "name": "email",
+            "type": "email",
+            "placeholder": "Email",
+            "testid": "input-email",
+            "required": true
+          }
+        ],
+        "submit": "submit-btn"
+      }
+    ]
+  },
+  {
+    "route": "book-soldout",
+    "path": "/#/book/3",
+    "statusCode": 200,
+    "heading": "",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "book-root",
+        "text": ""
+      },
+      {
+        "testid": "error-msg",
+        "text": "Plan unavailable"
+      },
+      {
+        "testid": "back-link",
+        "text": "Back to plans"
+      }
+    ],
+    "forms": []
+  },
+  {
+    "route": "confirm",
+    "path": "/#/confirm",
+    "statusCode": 200,
+    "heading": "",
+    "testids": [
+      {
+        "testid": "nav",
+        "text": ""
+      },
+      {
+        "testid": "nav-home",
+        "text": "Home"
+      },
+      {
+        "testid": "nav-plans",
+        "text": "Plans"
+      },
+      {
+        "testid": "nav-search",
+        "text": "Search"
+      },
+      {
+        "testid": "confirm-root",
+        "text": ""
+      },
+      {
+        "testid": "no-booking",
+        "text": "No active booking"
+      },
+      {
+        "testid": "back-plans",
+        "text": "Browse plans"
+      }
+    ],
+    "forms": []
+  }
+]
