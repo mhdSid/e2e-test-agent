@@ -113,6 +113,20 @@ export interface Journey {
   crossRoute: boolean
 }
 
+/**
+ * A BLIND SPOT: a construct the static analysis structurally cannot resolve, declared
+ * explicitly so it never fails silently. This is the loud-uncertainty handoff to the
+ * runtime probe — "there are states here I could not derive; observe them."
+ *  - dynamic-component: <component :is="x"> — the tag isn't statically known
+ *  - slot-projection:   <slot> — content is injected by the parent, not in this SFC
+ *  - dynamic-list:      v-for whose rows contain components/conditionals (per-row states)
+ *  - injected-state:    a guard reads inject()'d state — no static edge to the provider
+ */
+export interface Unresolved {
+  kind: 'dynamic-component' | 'slot-projection' | 'dynamic-list' | 'injected-state'
+  detail: string
+}
+
 export interface StateMachine {
   file: string
   route: string
@@ -123,6 +137,8 @@ export interface StateMachine {
   signals: SignalSummary[]
   transitions: Transition[]
   journeys: Journey[]
+  /** constructs static analysis could not resolve — the probe must observe these. */
+  unresolved: Unresolved[]
   props: string[]
   storesUsed: string[]
   texts: Record<string, string>

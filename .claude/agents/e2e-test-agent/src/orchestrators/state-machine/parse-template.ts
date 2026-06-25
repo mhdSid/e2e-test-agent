@@ -1,5 +1,5 @@
 import { parse } from '@vue/compiler-dom'
-import type { StateNode, ComponentUsage, ComponentProp, StateRecipe } from './types'
+import type { StateNode, ComponentUsage, ComponentProp, StateRecipe, Unresolved } from './types'
 import type { Provenance } from './graph/types'
 import { analyzeExpression } from './graph/expression'
 import { NODE_TYPE, TAG_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR, FRAMEWORK_COMPONENTS } from './constants'
@@ -23,6 +23,8 @@ interface ParsedTemplate {
   allTestids: string[]
   /** testid → static literal text around interpolations, e.g. "Name:" for `Name: {{ x }}`. */
   texts: Record<string, string>
+  /** template constructs static analysis cannot resolve (declared, never silent). */
+  unresolved: Unresolved[]
 }
 
 type IfKind = 'if' | 'else-if' | 'else'
@@ -207,6 +209,55 @@ function collectAll (node: any, ids: string[]): void {
 }
 
 /**
+ * Does a node's subtree contain a non-framework component? v-if branches inside a v-for
+ * are already captured as states, so only per-row COMPONENT instances (whose own states
+ * we don't expand per row) make the list a genuine blind spot.
+ */
+function subtreeHasComponent (node: any): boolean {
+  for (const child of node.children ?? []) {
+    if (child.type !== NODE_TYPE.ELEMENT) continue
+    const tag: string = child.tag ?? ''
+    if (child.tagType === TAG_TYPE.COMPONENT && !(FRAMEWORK_COMPONENTS as readonly string[]).includes(tag)) return true
+    if (subtreeHasComponent(child)) return true
+  }
+  return false
+}
+
+/**
+ * Declare the template constructs static analysis cannot resolve — so they never fail
+ * silently. Each becomes an explicit handoff to the runtime probe.
+ */
+function collectUnresolved (node: any, out: Unresolved[]): void {
+  if (node.type === NODE_TYPE.ELEMENT) {
+    const tag: string = node.tag ?? ''
+    if (tag === 'component') {
+      const isBind = (node.props ?? []).find(
+        (p: any) => p.type === PROP_TYPE.DIRECTIVE && p.name === DIRECTIVES.BIND && p.arg?.content === 'is'
+      )
+      out.push({
+        kind: 'dynamic-component',
+        detail: `<component :is="${isBind?.exp?.content ?? '?'}"> — rendered component not statically known`
+      })
+    }
+    if (tag === 'slot') {
+      const name = (node.props ?? []).find((p: any) => p.name === 'name')?.value?.content
+      out.push({
+        kind: 'slot-projection',
+        detail: `<slot${name ? ` name="${name}"` : ''}> — content projected by the parent`
+      })
+    }
+    const vFor = (node.props ?? []).find((p: any) => p.type === PROP_TYPE.DIRECTIVE && p.name === 'for')
+    if (vFor && subtreeHasComponent(node)) {
+      out.push({
+        kind: 'dynamic-list',
+        detail: `v-for="${vFor.exp?.content ?? ''}" — per-row component states not enumerated statically`
+      })
+    }
+  }
+  for (const child of node.children ?? []) collectUnresolved(child, out)
+}
+
+/**
  * Static literal text for each testid — the parts NOT inside {{ interpolation }}.
  * The probe captures runtime text only for states it can reach; this gives the
  * generator the literal label (e.g. "Name:") for states it cannot, so an
@@ -242,10 +293,12 @@ export function parseTemplate (
 
   const allTestids: string[] = []
   const texts: Record<string, string> = {}
+  const unresolved: Unresolved[] = []
   for (const child of ast.children ?? []) {
     collectAll(child, allTestids)
     collectTexts(child, texts)
+    collectUnresolved(child, unresolved)
   }
 
-  return { states, components, allTestids, texts }
+  return { states, components, allTestids, texts, unresolved }
 }

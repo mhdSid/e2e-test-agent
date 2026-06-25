@@ -16,6 +16,8 @@ export interface ScriptModel {
   handlerMutations: Record<string, string[]>
   /** handler/function name → route paths it navigates to (router.push/replace). */
   handlerNavigations: Record<string, string[]>
+  /** bindings from inject() — provided by an ancestor, no static edge to the provider. */
+  injected: string[]
 }
 
 /** Root signals written by assignments / increments anywhere inside a node. */
@@ -147,11 +149,18 @@ export function extractSignals (
 
   const signals = new Map<string, Signal>()
   const storesUsed: string[] = []
+  const injected: string[] = []
 
   for (const decl of sf.getVariableDeclarations()) {
     const init = decl.getInitializer()
     if (!init || !Node.isCallExpression(init)) continue
     const nameNode = decl.getNameNode()
+
+    // inject() — state provided by an ancestor; no static edge to the provider.
+    if (calleeName(init) === 'inject' && Node.isIdentifier(nameNode)) {
+      injected.push(nameNode.getText())
+      continue
+    }
 
     // Bindings destructured from any call are reactive composable state
     // (e.g. `const { errors, meta } = useForm(...)`), even from an external package.
@@ -214,6 +223,7 @@ export function extractSignals (
     props,
     storesUsed: [...new Set(storesUsed)],
     handlerMutations,
-    handlerNavigations
+    handlerNavigations,
+    injected: [...new Set(injected)]
   }
 }

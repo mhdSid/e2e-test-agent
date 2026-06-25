@@ -42,6 +42,11 @@ function summarizeOne (m: StateMachine): string {
     }
   }
 
+  if (m.unresolved.length) {
+    lines.push('blind spots (static could NOT resolve — the probe must observe these; there may be more states than listed here):')
+    for (const u of m.unresolved) lines.push(`  [${u.kind}] ${u.detail}`)
+  }
+
   lines.push('scenarios (cover every one):')
   for (const sc of m.scenarios) {
     lines.push(`  - [${sc.id}] (${sc.provenance}) ${sc.description}`)

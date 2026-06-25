@@ -15,10 +15,11 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import type { Adapter } from '../../core/types'
 import { FILES } from '../../core/constants'
-import type { StateMachine, Transition, SignalSummary, Journey } from './types'
+import type { StateMachine, Transition, SignalSummary, Journey, Unresolved } from './types'
 import { parseTemplate } from './parse-template'
 import { parseForms } from './parse-forms'
 import { extractSignals } from './graph/signals'
+import { analyzeExpression } from './graph/expression'
 import { buildReactiveGraph, provenanceOf, actuatorsAffecting } from './graph/reactive-graph'
 import { synthesizeScenarios } from './scenarios'
 import { deriveContracts } from './derive-contract'
@@ -50,10 +51,26 @@ export function generateStateMachine (
     })
   )
 
-  const { states, components, texts } = parseTemplate(
+  const { states, components, texts, unresolved: templateUnresolved } = parseTemplate(
     templateContent,
     (cond) => provenanceOf(graph, cond, validationSignals),
     testidDirective
+  )
+
+  // Loud uncertainty: template blind spots + guards reading inject()'d state.
+  const unresolved: Unresolved[] = [...templateUnresolved]
+  for (const state of states) {
+    for (const root of analyzeExpression(state.condition).roots) {
+      if (model.injected.includes(root)) {
+        unresolved.push({
+          kind: 'injected-state',
+          detail: `${state.condition} reads injected '${root}' — provided by an ancestor, no static edge`
+        })
+      }
+    }
+  }
+  const dedupedUnresolved = unresolved.filter(
+    (u, i) => unresolved.findIndex((v) => v.kind === u.kind && v.detail === u.detail) === i
   )
 
   // PUSH: which actuators flip each state → transitions (the State-Flow-Graph edges).
@@ -96,6 +113,7 @@ export function generateStateMachine (
     signals,
     transitions,
     journeys,
+    unresolved: dedupedUnresolved,
     props: model.props,
     storesUsed: model.storesUsed,
     texts,
