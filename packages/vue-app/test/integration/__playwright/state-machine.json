@@ -9,6 +9,7 @@
     "signals": [],
     "transitions": [],
     "journeys": [],
+    "unresolved": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -137,6 +138,7 @@
         "crossRoute": false
       }
     ],
+    "unresolved": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -304,6 +306,7 @@
         "crossRoute": false
       }
     ],
+    "unresolved": [],
     "props": [],
     "storesUsed": [],
     "texts": {
@@ -485,6 +488,7 @@
         "crossRoute": false
       }
     ],
+    "unresolved": [],
     "props": [],
     "storesUsed": [
       "useBookingStore"
@@ -632,6 +636,7 @@
         "crossRoute": false
       }
     ],
+    "unresolved": [],
     "props": [],
     "storesUsed": [
       "useBookingStore"

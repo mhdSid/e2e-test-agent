@@ -4,7 +4,7 @@
  * actuators). Provenance and transitions are graph traversals, never keyword matches.
  */
 
-export type SignalKind = 'ref' | 'reactive' | 'computed' | 'prop' | 'route' | 'store' | 'composable'
+export type SignalKind = 'ref' | 'reactive' | 'computed' | 'prop' | 'route' | 'store' | 'composable' | 'loading-gate'
 
 /** Where a guard's data ultimately originates — the pull/backward-slice classification. */
 export type Provenance = 'route' | 'prop' | 'store' | 'user-input' | 'validation' | 'data' | 'unknown'

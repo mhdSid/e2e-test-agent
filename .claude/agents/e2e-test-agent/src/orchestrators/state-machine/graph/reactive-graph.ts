@@ -2,13 +2,30 @@ import { parse } from '@vue/compiler-dom'
 import { analyzeExpression } from './expression'
 import type { ReactiveGraph, Signal, Actuator, Provenance } from './types'
 import type { ScriptModel } from './signals'
-import { NODE_TYPE, DIRECTIVES, TESTID_ATTR } from '../constants'
+import { NODE_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR } from '../constants'
 
 // Highest-priority provenance wins when a guard mixes sources.
 const PRIORITY: Provenance[] = ['route', 'store', 'prop', 'user-input', 'data', 'unknown']
 
-function getTestid (node: any): string | null {
-  return node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content ?? null
+function stripQuotes (s: string): string {
+  return s.replace(/^['"`]|['"`]$/g, '')
+}
+
+/**
+ * An element's testid: a literal `data-testid`, or the configured directive
+ * (`v-testable="'x'"` → "x"). Mirrors parse-template so actuators on directive-tagged
+ * elements get the same selector the probe/state machine see — without this, every
+ * actuator on a v-testable element (i.e. all of real Gora) would have a null testid.
+ */
+function getTestid (node: any, directive: string): string | null {
+  const attr = node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content
+  if (attr) return attr
+  if (directive) {
+    const dir = node.props?.find((p: any) => p.type === PROP_TYPE.DIRECTIVE && p.name === directive)
+    const raw = dir?.exp?.content ?? dir?.arg?.content
+    if (raw) return stripQuotes(raw)
+  }
+  return null
 }
 
 function rootOf (expr: string | undefined): string | null {
@@ -22,9 +39,15 @@ function rootOf (expr: string | undefined): string | null {
  * too. Each actuator marks its target signal user-mutable — that is what later makes a
  * guard reading it classify as `user-input`.
  */
-function collectActuators (node: any, model: ScriptModel, signals: Map<string, Signal>, out: Actuator[]): void {
+function collectActuators (
+  node: any,
+  model: ScriptModel,
+  signals: Map<string, Signal>,
+  out: Actuator[],
+  directive: string
+): void {
   if (node.type === NODE_TYPE.ELEMENT) {
-    const testid = getTestid(node)
+    const testid = getTestid(node, directive)
     for (const prop of node.props ?? []) {
       if (prop.name === DIRECTIVES.MODEL) {
         const target = rootOf(prop.exp?.content)
@@ -42,7 +65,7 @@ function collectActuators (node: any, model: ScriptModel, signals: Map<string, S
       }
     }
   }
-  for (const child of node.children ?? []) collectActuators(child, model, signals, out)
+  for (const child of node.children ?? []) collectActuators(child, model, signals, out, directive)
 }
 
 function markMutable (signals: Map<string, Signal>, name: string): void {
@@ -50,11 +73,15 @@ function markMutable (signals: Map<string, Signal>, name: string): void {
   if (s) s.userMutable = true
 }
 
-export function buildReactiveGraph (model: ScriptModel, templateContent: string): ReactiveGraph {
+export function buildReactiveGraph (
+  model: ScriptModel,
+  templateContent: string,
+  testidDirective = 'testable'
+): ReactiveGraph {
   const signals = model.signals
   const actuators: Actuator[] = []
   const ast = parse(templateContent)
-  for (const child of ast.children ?? []) collectActuators(child, model, signals, actuators)
+  for (const child of ast.children ?? []) collectActuators(child, model, signals, actuators, testidDirective)
   return { signals, actuators }
 }
 
@@ -71,6 +98,7 @@ function provenanceOfSignal (graph: ReactiveGraph, name: string, seen: Set<strin
     case 'store': return ['store']
     case 'prop': return ['prop']
     case 'composable': return ['user-input']
+    case 'loading-gate': return ['data'] // flipped by an async/lifecycle hook, not user input
     case 'ref':
     case 'reactive':
       return [s.userMutable ? 'user-input' : 'data']

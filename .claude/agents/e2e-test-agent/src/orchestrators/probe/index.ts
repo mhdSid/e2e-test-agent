@@ -20,13 +20,19 @@ type PageFacts = Pick<ProbePageResult, 'heading' | 'testids' | 'forms'>
  * so a transpiled closure throws `__name is not defined`. A string is evaluated
  * verbatim by the browser and sidesteps that entirely.
  */
+// Some apps (e.g. Gora's directive-testable) render `data-test-id` by default and only
+// emit `data-testid` when explicitly enabled — so the probe must read BOTH attributes,
+// preferring data-testid where present. Querying both keeps the captured inventory aligned
+// with whichever attribute the app actually emits; the gate validates against the real DOM.
+const TESTID_SELECTOR = '[data-testid], [data-test-id]'
 const EXTRACT_SCRIPT = `(() => {
   const clean = (s) => (s || '').replace(/\\s+/g, ' ').trim().slice(0, 120)
   const ownText = (el) => clean(
     Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent).join('')
   )
-  const testids = Array.from(document.querySelectorAll('[data-testid]')).map((el) => ({
-    testid: el.getAttribute('data-testid'),
+  const testid = (el) => el.getAttribute('data-testid') || el.getAttribute('data-test-id')
+  const testids = Array.from(document.querySelectorAll('${TESTID_SELECTOR}')).map((el) => ({
+    testid: testid(el),
     text: ownText(el)
   }))
   const forms = Array.from(document.querySelectorAll('form')).map((form) => {
@@ -34,7 +40,7 @@ const EXTRACT_SCRIPT = `(() => {
       name: i.getAttribute('name'),
       type: i.getAttribute('type') || i.tagName.toLowerCase(),
       placeholder: i.getAttribute('placeholder'),
-      testid: i.getAttribute('data-testid'),
+      testid: testid(i),
       required: i.hasAttribute('required')
     }))
     const submitEl = form.querySelector('[type="submit"]')
@@ -42,7 +48,7 @@ const EXTRACT_SCRIPT = `(() => {
       action: form.getAttribute('action'),
       method: (form.getAttribute('method') || 'GET').toUpperCase(),
       inputs,
-      submit: submitEl ? submitEl.getAttribute('data-testid') : null
+      submit: submitEl ? testid(submitEl) : null
     }
   })
   const h1 = document.querySelector('h1')
@@ -58,7 +64,7 @@ async function probeRoute (browser: Browser, baseUrl: string, name: string, path
   try {
     const response = await page.goto(baseUrl + path, { waitUntil: 'networkidle' })
     // Wait for the SPA to actually mount something before reading the DOM.
-    await page.waitForSelector('[data-testid]', { timeout: RENDER_TIMEOUT_MS }).catch(() => undefined)
+    await page.waitForSelector(TESTID_SELECTOR, { timeout: RENDER_TIMEOUT_MS }).catch(() => undefined)
     const { heading, testids, forms } = await extractPage(page)
     return {
       route: name,

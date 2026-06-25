@@ -1,8 +1,17 @@
-import { existsSync } from 'fs'
+import { statSync } from 'fs'
 import { resolve, dirname, extname } from 'path'
 
 const ALIAS_FALLBACKS = ['@/', '~/']
 const EXTS = ['.vue', '.ts', '.js']
+
+/** A path that exists AND is a file (not a directory — `./api` must resolve to api/index.ts). */
+function isFile (path: string): boolean {
+  try {
+    return statSync(path).isFile()
+  } catch {
+    return false
+  }
+}
 
 /**
  * Resolve an import specifier to a real file path: relative imports against the
@@ -38,8 +47,10 @@ export function resolveModule (
   }
 
   if (!base) return null
-  const candidates = extname(base)
+  // Only a KNOWN module extension is treated as final — a dotted filename like
+  // `index.prod` has extname `.prod` but still needs `.ts` appended to resolve.
+  const candidates = EXTS.includes(extname(base))
     ? [base]
-    : [...EXTS.map((e) => base + e), ...EXTS.map((e) => resolve(base as string, `index${e}`))]
-  return candidates.find(existsSync) ?? null
+    : [base, ...EXTS.map((e) => base + e), ...EXTS.map((e) => resolve(base as string, `index${e}`))]
+  return candidates.find(isFile) ?? null
 }

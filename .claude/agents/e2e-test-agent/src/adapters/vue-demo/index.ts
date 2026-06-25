@@ -8,7 +8,7 @@ import type { Adapter } from '../../core/types'
  * browser to capture the *default-rendered* selectors; the state machine parses the
  * SFC to enumerate *every* reachable state. Together they are the ground truth.
  */
-const VIEWS = 'packages/vue-app/src/views'
+const VIEWS = 'packages/vue-app/src/pages'
 
 const routes = [
   { name: 'home', path: '/#/', sfc: `${VIEWS}/HomeView.vue` },

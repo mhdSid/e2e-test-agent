@@ -20,16 +20,21 @@ import { parseTemplate } from './parse-template'
 import { parseForms } from './parse-forms'
 import { extractSignals } from './graph/signals'
 import { analyzeExpression } from './graph/expression'
+import { resolveModule } from './graph/resolve'
 import { buildReactiveGraph, provenanceOf, actuatorsAffecting } from './graph/reactive-graph'
 import { synthesizeScenarios } from './scenarios'
 import { deriveContracts } from './derive-contract'
+
+/** Bound on thin-shell delegation so a wrapper-import cycle can't loop forever. */
+const MAX_DELEGATION = 8
 
 /** Parse one SFC into a state machine. Pure — does not touch disk. */
 export function generateStateMachine (
   sfcPath: string,
   route: string,
   aliases: Record<string, string> = {},
-  testidDirective = 'testable'
+  testidDirective = 'testable',
+  delegationDepth = 0
 ): StateMachine {
   const { descriptor } = parseSfc(readFileSync(sfcPath, 'utf8'))
   const templateContent = descriptor.template?.content ?? ''
@@ -37,7 +42,7 @@ export function generateStateMachine (
 
   // Build the typed reactive graph, then derive everything as graph traversals.
   const model = extractSignals(scriptContent, sfcPath, aliases)
-  const graph = buildReactiveGraph(model, templateContent)
+  const graph = buildReactiveGraph(model, templateContent, testidDirective)
 
   const forms = parseForms(templateContent, model.handlerNavigations, testidDirective)
 
@@ -56,6 +61,18 @@ export function generateStateMachine (
     (cond) => provenanceOf(graph, cond, validationSignals),
     testidDirective
   )
+
+  // GAP-1: thin-shell delegation. A page that is a one-child wrapper — no own states and
+  // exactly one resolvable non-framework child — has its substantive reactive states one
+  // level down (the Nuxt page→container split). Delegate to that child's SFC. Purely
+  // structural: we recurse only when there is nothing to analyse here AND exactly one place
+  // the analysis can continue. The route is preserved (the probe still navigates the shell).
+  if (states.length === 0 && components.length === 1 && delegationDepth < MAX_DELEGATION) {
+    const delegatePath = resolveModule(model.importMap[components[0].component], sfcPath, aliases)
+    if (delegatePath && delegatePath !== sfcPath) {
+      return generateStateMachine(delegatePath, route, aliases, testidDirective, delegationDepth + 1)
+    }
+  }
 
   // Loud uncertainty: template blind spots + guards reading inject()'d state.
   const unresolved: Unresolved[] = [...templateUnresolved]

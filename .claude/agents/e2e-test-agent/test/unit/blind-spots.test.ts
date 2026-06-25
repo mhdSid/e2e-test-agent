@@ -3,7 +3,7 @@ import { resolve } from 'path'
 import { generateStateMachine } from '../../src/orchestrators/state-machine/index'
 
 // from test/unit → up 5 to repo root → packages/vue-app
-const VIEW = resolve(__dirname, '../../../../../packages/vue-app/src/views/BlindSpotsView.vue')
+const VIEW = resolve(__dirname, '../../../../../packages/vue-app/src/pages/BlindSpotsView.vue')
 
 function unresolvedKinds (): string[] {
   return generateStateMachine(VIEW, '/#/bs', {}).unresolved.map((u) => u.kind)
@@ -27,7 +27,7 @@ describe('loud uncertainty — blind spots are declared, never silent', () => {
   })
 
   it('does NOT over-flag the simple example views (no blind spots there)', () => {
-    const plans = resolve(__dirname, '../../../../../packages/vue-app/src/views/PlansView.vue')
+    const plans = resolve(__dirname, '../../../../../packages/vue-app/src/pages/PlansView.vue')
     expect(generateStateMachine(plans, '/#/plans', {}).unresolved).toHaveLength(0)
   })
 })

@@ -1,0 +1,44 @@
+:root {
+  --accent: #2563eb;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f1f5f9;
+}
+
+nav[data-testid='nav'] {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.9rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+nav[data-testid='nav'] a {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
+
+nav[data-testid='nav'] a:hover,
+nav[data-testid='nav'] a.router-link-active {
+  color: var(--accent);
+}
+
+main {
+  min-height: 100vh;
+}
