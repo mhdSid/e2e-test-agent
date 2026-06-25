@@ -131,45 +131,53 @@ them to SFC-derived. The design scales by configuration, not by editing a table.
 
 ## Quickstart
 
+This is a **yarn monorepo**: the agent lives in `.claude/agents/e2e-test-agent`, target
+apps live in `packages/*`. Run everything from the **repo root** (so adapter paths
+resolve against root).
+
 ```bash
 yarn install
 yarn playwright install chromium
 
-# terminal 1 — run the example SPA
-yarn example:dev                 # http://localhost:5173
+# terminal 1 — run the target app
+yarn app:dev                      # vue-app on http://localhost:5173
 
-# terminal 2 — generate + gate against it
-export ANTHROPIC_API_KEY=sk-...  # or a .env file (gitignored)
-yarn run --base-url http://localhost:5173
+# terminal 2 — generate + gate (writes into packages/vue-app/test/integration/__playwright)
+export ANTHROPIC_API_KEY=sk-...   # or a .env file (gitignored)
+yarn e2e                          # probe → statemachine → plan → generate → gate → execute
 
 # run the generated specs
-yarn playwright test
+yarn test:e2e
 ```
 
-Individual stages: `yarn probe`, `yarn statemachine`, `yarn plan`, `yarn generate`, `yarn gate`.
-
-All artifacts are written to `test/integration/__playwright/`, which is also the
-only directory Playwright is configured to run.
+Individual stages: `yarn e2e:probe`, `yarn e2e:statemachine`, `yarn e2e:gate`.
+Agent dev loop: `yarn agent:typecheck`, `yarn agent:test` (vitest), `yarn agent:lint`.
 
 ---
 
-## Layout
+## Layout (monorepo)
 
 ```
-src/
-  cli/                     commander entry (probe · statemachine · plan · generate · gate · run)
-  run.ts                   pipeline orchestrator + repair loop
-  core/                    types, constants, output sanitizer
-  adapters/vue-demo/       route → SFC map + monorepo aliases
-  generators/              Anthropic SDK wrapper (swap for Bedrock here)
-  rules/                   composable raw rule strings for the prompts
-  orchestrators/
-    probe/                 Playwright DOM probe
-    state-machine/         parse-template · parse-forms · parse-script (ts-morph)
-                           conventions · derive-contract · scenarios · summarize
-    plan/ generate/ gate/ repair/
-example/                   Vue 3 + Pinia + vue-router target SPA (hash routing)
-test/integration/__playwright/   generated artifacts + the specs Playwright runs
+package.json                       root: yarn workspaces + e2e:* / agent:* scripts
+playwright.config.ts               runs the generated specs under packages/*/test
+.claude/agents/e2e-test-agent/     ★ THE AGENT (workspace 'e2e-agent')
+  src/
+    cli/                           commander entry (probe · statemachine · plan · generate · gate · run)
+    run.ts                         pipeline orchestrator + repair loop
+    core/                          types, constants, output sanitizer
+    adapters/vue-demo/             route → SFC map + monorepo aliases + testid directive
+    generators/                    Anthropic SDK wrapper (swap for Bedrock here)
+    orchestrators/
+      probe/                       Playwright DOM probe (reads runtime data-testid)
+      state-machine/               reactive graph (graph/: signals · expression · reactive-graph)
+                                   parse-template · parse-forms · scenarios · derive-contract · summarize
+      plan/ generate/ gate/ execute/ repair/
+  test/unit/                       vitest suite (15 tests, complex CheckoutView fixture)
+packages/
+  vue-app/                         target SPA #1 (workspace 'vue-app') — Pinia + vue-router, hash routing
+    src/                           views · stores · schemas · components
+    test/integration/__playwright/ generated artifacts + the specs Playwright runs
+  vue-app-1 … vue-app-n/           further targets, same shape
 ```
 
 ## Targeting your own app
