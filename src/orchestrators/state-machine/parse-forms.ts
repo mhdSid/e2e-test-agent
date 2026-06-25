@@ -1,10 +1,21 @@
 import { parse } from '@vue/compiler-dom'
 import type { FormState, ValidationField } from './types'
 import { analyzeExpression } from './graph/expression'
-import { NODE_TYPE, DIRECTIVES, TESTID_ATTR } from './constants'
+import { NODE_TYPE, PROP_TYPE, DIRECTIVES, TESTID_ATTR } from './constants'
 
+// Per-parse config: a directive (e.g. 'testable') that renders to data-testid at runtime.
+let testidDirective = 'testable'
+
+/** testid from a literal data-testid attribute OR the configured directive (value taken 1:1). */
 function getTestid (node: any): string | null {
-  return node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content ?? null
+  const attr = node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content
+  if (attr) return attr
+  if (testidDirective) {
+    const dir = node.props?.find((p: any) => p.type === PROP_TYPE.DIRECTIVE && p.name === testidDirective)
+    const raw = dir?.exp?.content ?? dir?.arg?.content
+    if (raw) return raw.replace(/^['"`]|['"`]$/g, '')
+  }
+  return null
 }
 
 function getModel (node: any): string | null {
@@ -84,8 +95,10 @@ function findSubmit (node: any): { testid: string | null; gate: string | null } 
 
 export function parseForms (
   templateContent: string,
-  handlerNavigations: Record<string, string[]> = {}
+  handlerNavigations: Record<string, string[]> = {},
+  directive = 'testable'
 ): FormState[] {
+  testidDirective = directive
   const ast = parse(templateContent)
   const formNodes: any[] = []
   for (const child of ast.children ?? []) findForms(child, formNodes)

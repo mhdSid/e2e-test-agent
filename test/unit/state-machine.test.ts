@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolve } from 'path'
 import { generateStateMachine } from '../../src/orchestrators/state-machine/index'
+import { parseTemplate } from '../../src/orchestrators/state-machine/parse-template'
 import type { StateNode } from '../../src/orchestrators/state-machine/types'
 
 const CHECKOUT = resolve(__dirname, '../../example/src/views/CheckoutView.vue')
@@ -133,6 +134,29 @@ describe('state machine — complex checkout component', () => {
       const form = m.forms[0]
       const email = form.fields.find((f) => f.name === 'email')
       expect(email!.errorTestid).toBe('error-email')
+    })
+  })
+
+  describe('v-testable directive → data-testid (prod Gora has no literal data-testid)', () => {
+    const TPL = `
+      <div v-testable="'root'">
+        <p v-if="store.ready" v-testable="'ready-msg'">Ready</p>
+        <button data-testid="legacy-btn">Legacy</button>
+      </div>`
+
+    it('reads v-testable (1:1) AND a literal data-testid in the same template', () => {
+      const { states, allTestids } = parseTemplate(TPL, () => 'data', 'testable')
+      // v-testable="'ready-msg'" → ready-msg, and the legacy data-testid still works
+      expect(allTestids).toContain('root')
+      expect(allTestids).toContain('ready-msg')
+      expect(allTestids).toContain('legacy-btn')
+      expect(states.find((s) => s.condition === 'store.ready')!.visibleTestids).toContain('ready-msg')
+    })
+
+    it('honors a disabled directive ("") — only literal data-testid then', () => {
+      const { allTestids } = parseTemplate(TPL, () => 'data', '')
+      expect(allTestids).toContain('legacy-btn')
+      expect(allTestids).not.toContain('ready-msg')
     })
   })
 

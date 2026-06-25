@@ -27,7 +27,8 @@ import { deriveContracts } from './derive-contract'
 export function generateStateMachine (
   sfcPath: string,
   route: string,
-  aliases: Record<string, string> = {}
+  aliases: Record<string, string> = {},
+  testidDirective = 'testable'
 ): StateMachine {
   const { descriptor } = parseSfc(readFileSync(sfcPath, 'utf8'))
   const templateContent = descriptor.template?.content ?? ''
@@ -37,7 +38,7 @@ export function generateStateMachine (
   const model = extractSignals(scriptContent, sfcPath, aliases)
   const graph = buildReactiveGraph(model, templateContent)
 
-  const forms = parseForms(templateContent, model.handlerNavigations)
+  const forms = parseForms(templateContent, model.handlerNavigations, testidDirective)
 
   // A signal has the VALIDATION role if it gates a submit or drives an error element AND
   // it is a local/derived signal (not route/store/prop). Guards reading it → `validation`.
@@ -51,7 +52,8 @@ export function generateStateMachine (
 
   const { states, components, texts } = parseTemplate(
     templateContent,
-    (cond) => provenanceOf(graph, cond, validationSignals)
+    (cond) => provenanceOf(graph, cond, validationSignals),
+    testidDirective
   )
 
   // PUSH: which actuators flip each state → transitions (the State-Flow-Graph edges).
@@ -174,12 +176,13 @@ export function runStateMachine (outDir: string, adapter: Adapter): StateMachine
   const seen = new Set<string>()
   const machines: StateMachine[] = []
   const aliases = adapter.aliases ?? {}
+  const testidDirective = adapter.testidDirective ?? 'testable'
 
   for (const route of adapter.routes) {
     if (!route.sfc || seen.has(route.sfc)) continue
     seen.add(route.sfc)
     try {
-      const machine = generateStateMachine(resolve(route.sfc), route.path, aliases)
+      const machine = generateStateMachine(resolve(route.sfc), route.path, aliases, testidDirective)
       machines.push(machine)
       console.log(`  ✓ ${route.sfc} — ${machine.states.length} states, ${machine.scenarios.length} scenarios`)
     } catch (err) {

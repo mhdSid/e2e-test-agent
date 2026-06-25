@@ -27,8 +27,27 @@ interface ParsedTemplate {
 
 type IfKind = 'if' | 'else-if' | 'else'
 
+// Per-parse config: a directive (e.g. 'testable') that renders to data-testid at runtime.
+let testidDirective = 'testable'
+
+function stripQuotes (s: string): string {
+  return s.replace(/^['"`]|['"`]$/g, '')
+}
+
+/**
+ * The testid for a node: a literal `data-testid` attribute (unchanged, current behavior)
+ * OR the configured directive (`v-testable="'x'"` → "x"). Both supported so apps using
+ * either convention work; the directive value is taken 1:1, matching the runtime DOM.
+ */
 function getTestid (node: any): string | null {
-  return node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content ?? null
+  const attr = node.props?.find((p: any) => p.name === TESTID_ATTR)?.value?.content
+  if (attr) return attr
+  if (testidDirective) {
+    const dir = node.props?.find((p: any) => p.type === PROP_TYPE.DIRECTIVE && p.name === testidDirective)
+    const raw = dir?.exp?.content ?? dir?.arg?.content
+    if (raw) return stripQuotes(raw)
+  }
+  return null
 }
 
 function getIfDirective (node: any): { kind: IfKind; condition: string } | null {
@@ -211,8 +230,10 @@ function collectTexts (node: any, texts: Record<string, string>): void {
 
 export function parseTemplate (
   templateContent: string,
-  classify: Classify = () => 'data'
+  classify: Classify = () => 'data',
+  directive = 'testable'
 ): ParsedTemplate {
+  testidDirective = directive
   const ast = parse(templateContent)
   const states: StateNode[] = []
   const components: ComponentUsage[] = []

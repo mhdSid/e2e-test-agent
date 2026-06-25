@@ -52,6 +52,14 @@ export interface Adapter {
    * fall back to convention-derived contracts. No hand-maintained manifest.
    */
   aliases?: Readonly<Record<string, string>>
+  /**
+   * The directive that renders to `data-testid` at runtime (1:1), e.g. Gora's
+   * `v-testable="'x'"` → `data-testid="x"`. The static parser reads it as the testid
+   * source so its selectors match what the probe sees in the live DOM. A literal
+   * `data-testid` attribute always works too; this just adds the directive. Defaults
+   * to 'testable'; set to '' to disable.
+   */
+  testidDirective?: string
 }
 
 export interface GateCheck {
