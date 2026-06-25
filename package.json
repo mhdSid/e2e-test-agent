@@ -14,13 +14,12 @@
     "e2e:probe": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts probe --base-url http://localhost:5173 --out-dir packages/vue-app/test/integration/__playwright",
     "e2e:statemachine": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts statemachine --out-dir packages/vue-app/test/integration/__playwright",
     "e2e:gate": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts gate --out-dir packages/vue-app/test/integration/__playwright",
-    "test:e2e": "playwright test",
+    "test:e2e": "yarn workspace vue-app test:e2e",
     "agent:test": "yarn workspace e2e-agent test",
     "agent:typecheck": "yarn workspace e2e-agent typecheck",
     "agent:lint": "yarn workspace e2e-agent lint"
   },
   "devDependencies": {
-    "@playwright/test": "^1.45.0",
     "tsx": "^4.19.0"
   }
 }

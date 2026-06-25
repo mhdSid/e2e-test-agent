@@ -41,17 +41,28 @@ function collectFailures (node: any, out: TestFailure[], file: string): void {
 }
 
 /**
+ * The package that owns these artifacts: each target app under packages/* carries its
+ * own playwright.config (its own dev server + port). The out-dir lives inside that
+ * package's test/ tree, so the package root is the prefix before `/test/`.
+ */
+function packageRoot (outDir: string): string {
+  const abs = resolve(outDir)
+  const i = abs.indexOf('/test/')
+  return i >= 0 ? abs.slice(0, i) : process.cwd()
+}
+
+/**
  * EXECUTION GATE — actually run the generated spec in Playwright and report runtime
  * failures, so the pipeline verifies behaviour (not just static shape) and feeds real
- * assertion failures back into the repair loop. Playwright's webServer config starts /
- * reuses the example app, so this is self-contained.
+ * assertion failures back into the repair loop. Runs in the target package's dir so it
+ * uses that package's playwright.config (its own webServer + port) — self-contained.
  */
 export async function runExecute (outDir: string, baseUrl: string): Promise<ExecuteResult> {
   const jsonPath = resolve(tmpdir(), `e2e-agent-pw-${process.pid}.json`)
   rmSync(jsonPath, { force: true })
 
   const proc = spawnSync('yarn', ['playwright', 'test', '--reporter=json'], {
-    cwd: process.cwd(),
+    cwd: packageRoot(outDir),
     env: { ...process.env, E2E_BASE_URL: baseUrl, PLAYWRIGHT_JSON_OUTPUT_NAME: jsonPath },
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024
