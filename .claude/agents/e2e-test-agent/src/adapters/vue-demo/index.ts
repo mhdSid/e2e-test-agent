@@ -1,16 +1,14 @@
 import type { Adapter } from '../../core/types'
 
 /**
- * Adapter for the example/ Vue SPA.
- * Uses hash routing (vue-router createWebHashHistory) so all paths are /#/...
+ * Adapter for the packages/vue-app Vue SPA (paths are relative to the monorepo root,
+ * where the pipeline is run). Hash routing (createWebHashHistory) → all paths are /#/...
  *
  * Each route carries the SFC it renders. The probe navigates the route in a real
  * browser to capture the *default-rendered* selectors; the state machine parses the
- * SFC to enumerate *every* reachable state (including branches the probe can't reach
- * by direct navigation, e.g. the confirmed-booking view). Together they are the
- * ground truth the AI plans and generates against.
+ * SFC to enumerate *every* reachable state. Together they are the ground truth.
  */
-const VIEWS = 'example/src/views'
+const VIEWS = 'packages/vue-app/src/views'
 
 const routes = [
   { name: 'home', path: '/#/', sfc: `${VIEWS}/HomeView.vue` },
@@ -28,4 +26,8 @@ const routes = [
  */
 const journeyPosts = [] as const
 
-export const vueDemoAdapter: Adapter = { routes, journeyPosts }
+export const vueDemoAdapter: Adapter = {
+  routes,
+  journeyPosts,
+  aliases: { '@/': 'packages/vue-app/src' }
+}

@@ -1,7 +1,7 @@
 {
-  "name": "booking-vue",
+  "name": "vue-app",
   "version": "1.0.0",
-  "description": "Example Vue 3 app — target for e2e-agent",
+  "description": "Example Vue 3 app (packages/vue-app) — a target for e2e-agent",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

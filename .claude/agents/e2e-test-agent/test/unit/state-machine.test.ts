@@ -4,7 +4,8 @@ import { generateStateMachine } from '../../src/orchestrators/state-machine/inde
 import { parseTemplate } from '../../src/orchestrators/state-machine/parse-template'
 import type { StateNode } from '../../src/orchestrators/state-machine/types'
 
-const CHECKOUT = resolve(__dirname, '../../example/src/views/CheckoutView.vue')
+// from .claude/agents/e2e-test-agent/test/unit → up 5 to repo root → packages/vue-app
+const CHECKOUT = resolve(__dirname, '../../../../../packages/vue-app/src/views/CheckoutView.vue')
 
 function machine() {
   return generateStateMachine(CHECKOUT, '/#/checkout', {})

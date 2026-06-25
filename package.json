@@ -1,41 +1,26 @@
 {
-  "name": "e2e-agent",
+  "name": "gora-e2e-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "E2E test generation agent — probe → plan → generate → gate",
+  "description": "Monorepo: the e2e-test-agent (.claude/agents) generates Playwright tests for the apps under packages/*",
   "packageManager": "yarn@4.0.2",
   "workspaces": [
-    "example"
+    "packages/*",
+    ".claude/agents/e2e-test-agent"
   ],
-  "bin": "./src/cli/index.ts",
   "scripts": {
-    "probe": "tsx src/cli/index.ts probe",
-    "plan": "tsx src/cli/index.ts plan",
-    "generate": "tsx src/cli/index.ts generate",
-    "gate": "tsx src/cli/index.ts gate",
-    "run": "tsx src/cli/index.ts run",
-    "statemachine": "tsx src/cli/index.ts statemachine",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "example:dev": "yarn workspace booking-vue dev"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.52.0",
-    "@vue/compiler-dom": "^3.5.38",
-    "@vue/compiler-sfc": "^3.5.38",
-    "commander": "^12.0.0",
-    "playwright": "^1.45.0",
-    "ts-morph": "^24.0.0"
+    "app:dev": "yarn workspace vue-app dev --port 5173",
+    "e2e": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts run --base-url http://localhost:5173 --out-dir packages/vue-app/test/integration/__playwright",
+    "e2e:probe": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts probe --base-url http://localhost:5173 --out-dir packages/vue-app/test/integration/__playwright",
+    "e2e:statemachine": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts statemachine --out-dir packages/vue-app/test/integration/__playwright",
+    "e2e:gate": "tsx .claude/agents/e2e-test-agent/src/cli/index.ts gate --out-dir packages/vue-app/test/integration/__playwright",
+    "test:e2e": "playwright test",
+    "agent:test": "yarn workspace e2e-agent test",
+    "agent:typecheck": "yarn workspace e2e-agent typecheck",
+    "agent:lint": "yarn workspace e2e-agent lint"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",
-    "@stylistic/eslint-plugin": "^2.13.0",
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^9.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.5.0",
-    "vitest": "^4.1.9"
+    "tsx": "^4.19.0"
   }
 }

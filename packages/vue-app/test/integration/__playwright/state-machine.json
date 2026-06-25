@@ -1,6 +1,6 @@
 [
   {
-    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/HomeView.vue",
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/packages/vue-app/src/views/HomeView.vue",
     "route": "/#/",
     "states": [],
     "forms": [],
@@ -22,7 +22,7 @@
     "scenarios": []
   },
   {
-    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/PlansView.vue",
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/packages/vue-app/src/views/PlansView.vue",
     "route": "/#/plans",
     "states": [
       {
@@ -197,7 +197,7 @@
     ]
   },
   {
-    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/SearchView.vue",
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/packages/vue-app/src/views/SearchView.vue",
     "route": "/#/search",
     "states": [
       {
@@ -357,7 +357,7 @@
     ]
   },
   {
-    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/BookView.vue",
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/packages/vue-app/src/views/BookView.vue",
     "route": "/#/book/1",
     "states": [
       {
@@ -554,7 +554,7 @@
     ]
   },
   {
-    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/example/src/views/ConfirmView.vue",
+    "file": "/Users/mohamedsidani/Desktop/dev/e2e-test-agent/packages/vue-app/src/views/ConfirmView.vue",
     "route": "/#/confirm",
     "states": [
       {

@@ -1405,20 +1405,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"booking-vue@workspace:example":
-  version: 0.0.0-use.local
-  resolution: "booking-vue@workspace:example"
-  dependencies:
-    "@vitejs/plugin-vue": "npm:^5.0.0"
-    pinia: "npm:^2.1.0"
-    typescript: "npm:^5.5.0"
-    vite: "npm:^5.0.0"
-    vue: "npm:^3.4.0"
-    vue-router: "npm:^4.3.0"
-    vue-tsc: "npm:^2.0.0"
-  languageName: unknown
-  linkType: soft
-
 "brace-expansion@npm:^1.1.7":
   version: 1.1.15
   resolution: "brace-expansion@npm:1.1.15"
@@ -1573,9 +1559,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"e2e-agent@workspace:.":
+"e2e-agent@workspace:.claude/agents/e2e-test-agent":
   version: 0.0.0-use.local
-  resolution: "e2e-agent@workspace:."
+  resolution: "e2e-agent@workspace:.claude/agents/e2e-test-agent"
   dependencies:
     "@anthropic-ai/sdk": "npm:^0.52.0"
     "@playwright/test": "npm:^1.45.0"
@@ -2068,6 +2054,15 @@ __metadata:
   checksum: b96ff42620c9231ad468d4c58ff42afee7777ee1c963013ff8aabe095a451d0ceeb8dcd8ef4cbd64d2538cef45f787a78ba3a9574f4a634438963e334471302d
   languageName: node
   linkType: hard
+
+"gora-e2e-monorepo@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "gora-e2e-monorepo@workspace:."
+  dependencies:
+    "@playwright/test": "npm:^1.45.0"
+    tsx: "npm:^4.19.0"
+  languageName: unknown
+  linkType: soft
 
 "graceful-fs@npm:^4.2.6":
   version: 4.2.11
@@ -3143,6 +3138,20 @@ __metadata:
   checksum: 5f6c9c10fd9b1664d71fab4e9fbbae6be93c7f75bb3a1d9d74399a88ab8649e99691223fd7cef4644376cac6e94fa2c086d802521b9a8e31c5af3e60f0f35624
   languageName: node
   linkType: hard
+
+"vue-app@workspace:packages/vue-app":
+  version: 0.0.0-use.local
+  resolution: "vue-app@workspace:packages/vue-app"
+  dependencies:
+    "@vitejs/plugin-vue": "npm:^5.0.0"
+    pinia: "npm:^2.1.0"
+    typescript: "npm:^5.5.0"
+    vite: "npm:^5.0.0"
+    vue: "npm:^3.4.0"
+    vue-router: "npm:^4.3.0"
+    vue-tsc: "npm:^2.0.0"
+  languageName: unknown
+  linkType: soft
 
 "vue-demi@npm:^0.14.10":
   version: 0.14.10

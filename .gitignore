@@ -11,7 +11,7 @@ node_modules/
 
 # the generated worked example under test/ is committed on purpose (probe.json,
 # state-machine.json, test-plan.md, tests.spec.ts) so the output is reviewable.
-test/integration/__playwright/pr-comment.md
+packages/*/test/integration/__playwright/pr-comment.md
 
 # playwright run output
 playwright-report/
@@ -27,3 +27,6 @@ dist/
 # applied patch artifacts (kept locally, not committed)
 state-machine-full-patch/
 state-machine-full-patch.tar.gz
+
+# local reference (large binary)
+rdg-master-thesis.pdf
