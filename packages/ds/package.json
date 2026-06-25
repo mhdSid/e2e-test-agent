@@ -1,0 +1,6 @@
+{
+  "name": "@gora/ds",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Design system (components) — workspace package, a cross-package recursion target for the agent"
+}

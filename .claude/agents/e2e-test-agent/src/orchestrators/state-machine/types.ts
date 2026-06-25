@@ -77,6 +77,8 @@ export interface ComponentContract {
   component: string
   source: 'convention' | 'sfc' | 'sfc+convention'
   states: ComponentStateContract[]
+  /** true if any descendant is a foreign (unresolvable) component needing a runtime probe. */
+  hasOpaque: boolean
 }
 
 /** A reactive source surfaced in the machine output (for inspection/prompts). */

@@ -30,3 +30,5 @@ state-machine-full-patch.tar.gz
 
 # local reference (large binary)
 rdg-master-thesis.pdf
+deep-nesting-patch/
+deep-nesting-patch.tar.gz

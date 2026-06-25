@@ -508,6 +508,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@gora/core@workspace:packages/core":
+  version: 0.0.0-use.local
+  resolution: "@gora/core@workspace:packages/core"
+  languageName: unknown
+  linkType: soft
+
+"@gora/ds@workspace:packages/ds":
+  version: 0.0.0-use.local
+  resolution: "@gora/ds@workspace:packages/ds"
+  languageName: unknown
+  linkType: soft
+
 "@humanfs/core@npm:^0.19.2":
   version: 0.19.2
   resolution: "@humanfs/core@npm:0.19.2"
